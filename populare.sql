@@ -161,17 +161,378 @@ begin
   select "Users".Username into v_duplicat from "Users" where Username = trim(v_nume1 || '.' || v_nume2);
   EXCEPTION when NO_DATA_FOUND THEN
     v_ip := to_char(floor(DBMS_RANDOM.value(1,1000))) || '.' || to_char(floor(DBMS_RANDOM.value(1,1000))) || '.' ||  to_char(floor(DBMS_RANDOM.value(1,1000))) || '.' ||  to_char(floor(DBMS_RANDOM.value(1,1000)));
-    insert into "Users" (ID,Balance,IP,"Failed Logins",Adress,Username,Password,"Last Signin") values (
-    v_id,
-    round(DBMS_RANDOM.value(1,5000),2),
-    v_ip,
-    floor(DBMS_RANDOM.value(1,15)),
-    to_char(round(DBMS_RANDOM.value(-90,+90),6) || ' ' || round(DBMS_RANDOM.value(-180,+180),6)),
-    trim(v_nume1 || '.' || v_nume2),
-    dbms_random.string('X', 10),
-    to_date(trunc(dbms_random.value(2458573,2454833)),'J')
-    );
+    begin
+     select "Blacklisted IPs".IP into v_duplicat from "Blacklisted IPs" where IP = v_ip;
+     EXCEPTION when NO_DATA_FOUND THEN
+      insert into "Users" (ID,Balance,IP,"Failed Logins",Adress,Username,Password,"Last Signin") values (
+      v_id,
+      round(DBMS_RANDOM.value(1,5000),2),
+      v_ip,
+      floor(DBMS_RANDOM.value(1,15)),
+      to_char(round(DBMS_RANDOM.value(-90,+90),6) || ' ' || round(DBMS_RANDOM.value(-180,+180),6)),
+      trim(v_nume1 || '.' || v_nume2),
+      dbms_random.string('X', 10),
+      to_date(trunc(dbms_random.value(2458573,2454833)),'J')
+      );
+   end;
 end;
 v_duplicat:=' ';
+end loop;
+end;
+
+
+
+declare
+TYPE varr IS VARRAY(10) OF varchar2(40);
+lista varr := varr('red','green','blue','orchid gray','black','white','cyan','purple','magenta','orange');
+v_id number(38,0) := 0;
+v_nume varchar (40);
+v_categorie varchar(40);
+v_pret number(36,2);
+v_seller varchar (40);
+v_productie date;
+v_warrant int;
+v_model varchar(5);
+v_ite int :=1;
+v_culoare varchar(40);
+v_duplicat varchar (80) :=' ';
+begin
+v_nume := 'Samsung';
+v_seller := 'Samsung';
+v_categorie := 'Phone';
+while v_id < 100 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(100,4000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+v_nume := 'IPhone';
+v_seller := 'Apple';
+v_categorie := 'Phone';
+while v_id < 300 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(100,4000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+v_nume := 'Huawei';
+v_seller := 'Huawei';
+v_categorie := 'Phone';
+while v_id < 500 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(100,4000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+
+v_nume := 'Samsung';
+v_seller := 'Samsung';
+v_categorie := 'Fridge';
+while v_id < 700 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(1000,7000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+v_nume := 'Beko';
+v_seller := 'Beko';
+v_categorie := 'Fridge';
+while v_id < 900 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(1000,7000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+v_nume := 'Arctic';
+v_seller := 'Arctic';
+v_categorie := 'Fridge';
+while v_id < 1000 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(1000,7000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+
+v_nume := 'Samsung';
+v_seller := 'Samsung';
+v_categorie := 'Oven';
+while v_id < 1200 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(1000,7000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+
+v_nume := 'Samsung';
+v_seller := 'Samsung';
+v_categorie := 'Washing Machine';
+while v_id < 1500 loop
+v_model := dbms_random.string('X', 5);
+v_pret := round(dbms_random.value(1000,7000),2);
+  begin
+    select "Products".Model into v_duplicat from "Products" where Model = v_model;
+    EXCEPTION when NO_DATA_FOUND THEN
+      while v_ite < lista.count() loop
+       v_culoare :=lista(v_ite);
+       v_ite:=v_ite+1;
+       v_warrant := floor(dbms_random.value(2,20));
+       v_id:=v_id+1;
+       v_productie:=to_date(trunc(dbms_random.value(2458573,2454833)),'J');
+       insert into "Products" (ID,PRICE,NAME,WARRANT,"Selling Company",COLOR,MODEL,"Production Date","Category") values (v_id,
+       v_pret,
+       to_char(v_nume),
+       v_warrant,
+       to_char(v_seller),
+       v_culoare,
+       to_char(v_model),
+       to_char(v_productie),
+       to_char(v_categorie)
+       );
+      end loop;
+      end;
+      v_duplicat :=' ';
+      v_ite:=1;
+end loop;
+
+end;
+
+
+
+declare
+v_id number(38,0) :=0;
+lista list := list() ;
+v_nr int;
+begin
+while v_id<=100000 loop
+v_nr:= floor(dbms_random.value(0,10));
+for i in 1..v_nr loop
+lista.extend(); 
+lista(i):=floor(dbms_random.value(1,1500));
+end loop;
+update "Users" set "Users"."List of Searches" = lista where "Users".ID =v_id;
+lista := list();
+v_id:=v_id+1;
+end loop;
+end;
+
+  
+
+declare
+v_iter number(38,0):=0;
+lista list := list(0) ;
+cursor v_id is select id from "Users";
+r_id number(38,0);
+begin
+open v_id;
+loop
+  FETCH v_id into r_id ;
+  exit when v_id%NOTFOUND ;
+  insert into "Item List" ("User ID") values (r_id);
+end loop;
+close v_id;
+while v_iter <= 100000 loop
+begin
+v_iter:=v_iter+1;
+select "List of Searches" into lista from "Users" where ID=v_iter;
+EXCEPTION when NO_DATA_FOUND THEN 
+update  "Item List" set ("List of Products") = lista where "User ID"=v_iter;
+end;
+update  "Item List" set ("List of Products") = lista where "User ID"=v_iter;
+end loop;
+end;
+
+
+declare
+v_iter number(38,0):=0;
+lista list := list() ;
+cursor v_id is select id from "Users";
+r_id number(38,0);
+v_total number(36,2):=0;
+v_current number(36,2):=0;
+iter number(38,0):=1;
+begin
+open v_id;
+loop
+  FETCH v_id into r_id ;
+  exit when v_id%NOTFOUND ;
+  insert into "Shopping Cart" ("User ID","Total Price") values (r_id,0);
+end loop;
+close v_id;
+while v_iter <= 100000 loop
+v_total:=0;
+begin
+v_iter:=v_iter+1;
+select "List of Products" into lista from "Item List" where "User ID"=v_iter;
+EXCEPTION when NO_DATA_FOUND THEN 
+lista:= list() ;
+end;
+
+while iter <= lista.count() loop
+  select Price into v_current from "Products" where ID=lista(iter);
+  v_total:= v_total+ v_current;
+  iter:=iter+1;
+end loop;
+iter:=1;
+update "Shopping Cart" set "Total Price" = v_total where "User ID"=v_iter;
 end loop;
 end;
