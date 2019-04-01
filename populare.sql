@@ -536,3 +536,17 @@ iter:=1;
 update "Shopping Cart" set "Total Price" = v_total where "User ID"=v_iter;
 end loop;
 end;
+
+
+
+create index i_usename on "Users"(Username)
+
+create index i_productsNameModel on "Products"(name,model)
+
+create index i_productsName on "Products"(name)
+
+create index i_productsModel on "Products"(model)
+
+create index i_bPassword on "Blacklisted Passwords"(password)
+
+create index i_bIP on "Blacklisted IPs"(IP)
