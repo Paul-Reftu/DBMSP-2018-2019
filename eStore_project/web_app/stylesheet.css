@@ -1,0 +1,648 @@
+html {
+	font-size: 20px;
+    font-family: "Times New Roman", "Times", "Serif";
+}
+
+@media(max-width: 1580px) {
+	html {
+		font-size: 18px;
+	}
+}
+
+@media(max-width: 980px) {
+	html {
+		font-size: 16px;
+	}
+}
+
+@media(max-width: 400px) {
+	#logo img {
+		height: 30px;
+		width: 45px;
+	}
+}
+
+@media(min-width: 780px) {
+	.facilities {
+		width: 780px;
+	}
+}
+
+.facilities {
+	margin-left: 3%;
+	margin-right: 3%;
+}
+
+
+html, body {
+	margin: 0;
+	padding: 0;
+	overflow-x: hidden;
+}
+
+.button {
+  cursor: pointer;
+  background-color: Blue; 
+  border: none;
+  color: white;
+  padding: 1.3% 3%;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 90%;
+  
+  -webkit-transition-duration: 0.4s; 
+  transition-duration: 0.4s;
+  
+  margin-left: 1.25em;
+}
+
+.button:hover {
+  background-color: Red;
+  color: white;
+}
+
+.searchbar {
+	width: 40%;
+	height: 2.5em;
+}
+
+
+
+/* -------------- HEADER START -------------- */
+#main-header {
+	display: grid;
+	grid-template-rows: 100%;
+	grid-template-columns: 10% 90%;
+	align-items: center;
+	grid-gap: 1.5em;
+}
+
+/* grid-area: <grid-row-start> <grid-column-start> <grid-row-end> <grid-column-end>; */
+#main-header a {
+	grid-area: 1 / 1 / 2 / 2;
+}
+
+#main-header h1 {
+	grid-area: 1 / 2 / 2 / 3;
+}
+/* -------------- HEADER END -------------- */
+
+a {
+	text-decoration: none;
+}
+
+/* -------------- NAVBAR START -------------- */
+nav a:link, nav a:visited, nav a:focus {
+	transition: color .3s;
+	color: white;
+	opacity: .7;
+}
+
+nav li {
+	color: aqua;
+}
+
+nav a:hover {
+	transition: color .3s;
+	color: aqua;
+	opacity: 1;
+}
+
+nav {
+	font-size: 1.3em;
+	background-color: black;
+	padding: .1em;
+	width: 100%;
+	text-decoration: none;
+	list-style-type: none;
+}
+
+nav ul {
+	display: flex;
+	justify-content: space-around;
+	flex-flow: row wrap;
+	list-style-type: none;
+}
+/* -------------- NAVBAR END -------------- */
+
+/* -------------- LOGIN START --------------*/
+
+@media (min-width: 900px) {
+    #loginMain {
+        text-align: center;
+        margin-top: 3%;
+        margin-bottom: 3%;
+        margin-left: 30%;
+        margin-right: 30%;
+        background-color: #333333;
+        min-height: 350px;
+        color: white;
+    }
+    #loginMain h1 {
+        margin-top: -0.5em;
+    }
+    #loginPhoto {
+        width: 20%;
+        height: 20%;
+    }
+    .login {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 10%;
+        justify-items: center;
+        grid-gap: 1em;
+    }
+    #loginUsername {
+        grid-row: 1;
+        grid-column: 1/3;
+        font-size: 150%;
+    }
+    #loginPassword {
+        grid-row: 2;
+        grid-column: 1/3;
+        font-size: 150%;
+    }
+    div input {
+        height: 25px;
+    }
+    #register {
+        grid-row: 4;
+        color: white;
+        margin-top: 2.5em;
+        height: 4em;
+        width: 8em;
+        font-size: 130%;
+        background: none;
+        border: none;
+        font-weight: bold;
+    }
+    #register:hover {
+        transition: color .3s;
+        color: aqua;
+        opacity: 1;
+    }
+    #login {
+        grid-row: 4;
+        grid-column: 2;
+        font-size: 130%;
+        background: aqua;
+        height: 4em;
+        width: 8em;
+        border: none;
+        margin-top: 1em;
+    }
+    #login:hover {
+        border: 3px solid #00a3cc;
+    }
+    #loginUsername {
+        size: 120%;
+        margin-top: 1em;
+        margin-left: 1 em;
+        margin-bottom: 1em;
+        margin-right: 1em;
+    }
+    #loginPassword {
+        size: 120%;
+        margin-top: 1em;
+        margin-left: 1 em;
+        margin-bottom: 1em;
+        margin-right: 1em;
+    }
+}
+
+#loginMain p {
+    grid-row: 3;
+    grid-column: 1/3;
+}
+
+#loginMain p a {
+    color: white;
+}
+
+#loginMain p a:hover {
+    transition: color .3s;
+    color: aqua;
+    opacity: 1;
+}
+
+@media (max-width: 900px) {
+    #loginMain p a {
+        color: white;
+    }
+    #loginMain p a:hover {
+        transition: color .3s;
+        color: aqua;
+        opacity: 1;
+    }
+    main {
+        background-color: #333333;
+        margin: 0px;
+        padding: 0px;
+    }
+    #loginMain {
+        text-align: center;
+        margin-top: 1%;
+        margin-bottom: 1%;
+        margin-left: 5%;
+        margin-right: 5%;
+        background-color: #333333;
+        min-height: 350px;
+        color: white;
+        margin: 0px;
+    }
+    #loginMain h1 {
+        margin-top: -0.5em;
+    }
+    #loginPhoto {
+        width: 20%;
+        height: 20%;
+    }
+    .login {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #loginUsername {
+        font-size: 150%;
+    }
+    #loginPassword {
+        font-size: 150%;
+    }
+    div input {
+        height: 25px;
+    }
+    #register {
+        color: white;
+        margin-top: 2.5em;
+        height: 4em;
+        width: 8em;
+        font-size: 130%;
+        background: none;
+        border: none;
+        font-weight: bold;
+    }
+    #register:hover {
+        transition: color .3s;
+        color: aqua;
+        opacity: 1;
+    }
+    #login {
+        font-size: 130%;
+        background: aqua;
+        height: 4em;
+        width: 8em;
+        border: none;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    #login:hover {
+        border: 3px solid #00a3cc;
+    }
+    #loginUsername {
+        size: 120%;
+        margin-top: 1em;
+        margin-left: 1 em;
+        margin-bottom: 1em;
+        margin-right: 1em;
+    }
+    #loginPassword {
+        size: 120%;
+        margin-top: 1em;
+        margin-left: 1 em;
+        margin-bottom: 1em;
+        margin-right: 1em;
+    }
+}
+
+/* -------------- LOGIN END --------------*/
+
+/* -------------- CREATE ACCOUNT START --------------*/
+
+.register {
+    text-align: center;
+    margin-top: 3%;
+    margin-bottom: 3%;
+    margin-left: 30%;
+    margin-right: 30%;
+    background-color: #333333;
+    min-height: 350px;
+    color: white;
+}
+
+.register button {
+    font-size: 130%;
+    background: #4cc5a7;
+    height: 4em;
+    width: 8em;
+    border: none;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.register form div {
+    margin: 1em;
+    display: grid;
+    grid-column: 1fr 1fr;
+    justify-content: center;
+}
+
+.register form div label {
+    grid-column: 1;
+}
+
+.register form div input {
+    grid-column: 2;
+}
+
+#registerPhoto {
+    width: 20%;
+    height: 20%;
+    margin: 1em;
+}
+
+.register h1 {
+    margin-top: -0.5em;
+}
+
+.register form {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 1em;
+}
+
+@media (max-width: 900px) {
+    main {
+        margin: 0px;
+        background-color: #333333;
+    }
+    .register {
+        margin: 0px;
+    }
+    .register form {
+        margin: 0px;
+    }
+}
+
+/* -------------- CREATE ACCOUNT END --------------*/
+
+/* -------------- FORGOT PASSWORD START  --------------*/
+
+@media(min-width: 900px) {
+    #divFP {
+        text-align: center;
+        margin-top: 3%;
+        margin-bottom: 3%;
+        margin-left: 30%;
+        margin-right: 30%;
+        background-color: #333333;
+        min-height: 350px;
+        color: white;
+    }
+    #mailFP {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        margin: 1em;
+    }
+    #FP {
+        font-size: 130%;
+        background: aqua;
+        height: 4em;
+        width: 8em;
+        border: none;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    #FP:hover {
+        border: 3px solid #00a3cc;
+    }
+    #divFP img{
+        height: 7em;
+        width: 7em;
+    }
+}
+
+@media(max-width: 900px) {
+    #divFP {
+        margin: 0px;
+        padding: 1em;
+        text-align: center;
+        margin-top: 3%;
+        margin-bottom: 3%;
+        margin-left: 30%;
+        margin-right: 30%;
+        background-color: #333333;
+        min-height: 350px;
+        color: white;
+    }
+
+    
+    #mailFP {
+
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        margin: 1em;
+    }
+    #FP {
+        font-size: 130%;
+        background: aqua;
+        height: 4em;
+        width: 7em;
+        border: none;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    #FP:hover {
+        border: 3px solid #00a3cc;
+    }
+    .mainFP{
+        margin: 0px;
+        padding: 1em;
+        background-color: #333333;
+    }
+    .mainFP h1{
+        margin: 0px;
+    }
+    .mainFP form{
+        margin: 0px;
+    }
+    #divFP img{
+        height: 7em;
+        width: 7em;
+    }
+}
+
+/* -------------- FORGOT PASSWORD END --------------*/
+
+/* -------------- SOFTWARE VULNERABILITIES START -------------- */
+@media(min-width:900px){
+#softvuln{
+    display: grid;
+    grid-template-columns: 15% 85%;
+    grid-template-rows: 100%;
+}
+
+#filter{
+    grid-row: 1;
+    margin: 1em;
+    padding: 1em;
+    border: 1px solid;
+    background-color: #333333;
+    color: white;
+    min-width: 150px;
+}
+
+#filter ul li{
+    margin: 0;
+  list-style: none;
+}
+
+#vuln{
+    grid-column: 2;
+    grid-row: 1;
+    margin: 1em;
+    padding: 1em;
+    width: 90%;
+    background-color: #333333;
+    color: white;
+}
+#search{
+    width: 70%;
+    padding: 1em;
+}
+#search img{
+    width: 3em;
+    height: 3em;
+    float: left;
+    margin: 0.1em;
+}
+#search button{
+    width: 10%;
+    height: 4em;
+    background-color: white;
+    border: 1px solid darkgray;
+}
+#search button:hover{
+    background-color: darkgray;
+    border: 1px solid white;
+}
+
+
+.vulnerabilitate{
+    display: grid;
+    grid-template-columns: 10% 5% 5% 5% 35% 20% 20%;
+}
+.vulnerabilitate div{
+    text-align: center;
+    vertical-align:  center;
+    height: 2   em;
+    background-color: darkgray;
+    border: 1px solid white;
+}
+}
+
+@media(max-width:900px){
+    #filter{
+        left: -1000px;
+    }
+}
+
+/* -------------- SOFTWARE VULNERABILITIES START -------------- */
+
+
+/* -------------- MAIN START -------------- */
+main {}
+/* -------------- MAIN END -------------- */
+
+/* -------------- SECTION SLIDESHOW START -------------- */
+.slideshow-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 75vh;
+	margin-top: 2em;
+	margin-bottom: 5em;
+}
+
+.slideshow-container #slide {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 90%;
+	height: 100%;
+    opacity: 1;
+    transition: opacity 1.6s;
+}
+
+.slideshow-container #slide.fadeOut {
+    opacity : 0;
+}
+
+#slide h2 {
+	position: absolute;
+	background-color: white;
+	color: darkblue;
+	padding: .2em;
+	font-size: 2em;
+	opacity: .7;
+}
+
+#slide img {
+	z-index: -1;
+	width: 100%;
+	height: 100%;
+
+}
+/* -------------- SECTION SLIDESHOW END -------------- */
+
+/* -------------- FOOTER START -------------- */
+footer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background-color: black;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	margin-top: 35%;
+}
+
+footer p {
+	color: white;
+}
+/* -------------- FOOTER END -------------- */
+
+/* -------------- searchResults START -------------- */
+
+.searchResults {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.searchResults div:first-child {
+    margin-top: 1em;
+    font-size: 2em;
+}
+
+.searchResults div:not(:first-child) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    border: 2px solid white;
+    border-radius: 1.5em;
+    margin: .7em 3em;
+    padding: 1em;
+    background-color: #333333;
+    color: white;
+}
+
+/* -------------- searchResults END -------------- */
+
+
+
