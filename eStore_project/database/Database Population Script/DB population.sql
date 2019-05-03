@@ -418,6 +418,22 @@ end;
 /
 
 
+create sequence batch_seq start with 510000;
+/
+
+create sequence users_seq start with 1000000;
+/
+
+create sequence products_seq start with 650;
+/
+
+create sequence orderdets_seq start with 500000;
+/
+
+create sequence orders_seq start with 500000;
+/
+
+
 create index i_username on Users(Username);
 create index i_prodname on products(name);
 create index i_searches on searches(search);
