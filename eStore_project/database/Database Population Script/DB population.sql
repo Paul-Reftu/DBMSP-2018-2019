@@ -1,19 +1,11 @@
 drop table Users;
-/
 drop table Activities;
-/
 drop table Country;
-/
 drop table CountryConnections;
-/
 drop table Orders;
-/
 drop table Orderdetails;
-/
 drop table products;
-/
 drop table searches;
-/
 
 create table Users (
 ID number(38,0) primary key not null,
@@ -49,7 +41,7 @@ create table Activities(
 ID number(38,0) primary key not null,
 userID number(38,0),
 name varchar(50),
-time Date,
+time timestamp,
 Foreign key (userID) REFERENCES Users(ID)
 )
 /
@@ -75,8 +67,8 @@ create table Orders (
 ID number(38,0) primary key not null,
 buyerID number(38,0),
 destCountryID number(38,0),
-placed_at date,
-arrived_on date,
+placed_at timestamp,
+arrived_on timestamp,
 Foreign key (buyerID) REFERENCES Users(ID),
 Foreign key (destCountryID) REFERENCES Country(ID)
 )
@@ -228,7 +220,7 @@ end if;
 v_duplicat:=' ';
 end loop;
 end;
-/
+
 
 
 
@@ -254,7 +246,7 @@ v_id:=v_id+1;
 insert into country (id,name) values (v_id,tari(v_id));
 end loop;
 end;
-/
+
 
 
 declare
@@ -270,7 +262,7 @@ v_id2:=v_id2+1;
 end loop;
 end loop;
 end;
-/
+
 
 
 
@@ -389,7 +381,7 @@ v_val :=lista(round(dbms_random.value(1,lista.count())));
     insert into searches (id,userid,search) values (v_id,
     v_userid,
     v_val);
-    insert into activities (id,userid,name,time) values (v_id+500000,v_userid,'search',to_date(trunc(dbms_random.value(2458573,2454833)),'J'));
+    insert into activities (id,userid,name,time) values (v_id+500000,v_userid,'search',systimestamp - numtodsinterval(dbms_random.value * 5000, 'DAY'));
 end loop;
 end;
 /
@@ -401,14 +393,16 @@ declare
 v_id number(38,0) := 0;
 v_buyerid number(38,0);
 v_countryid number(38,0);
-v_date date;
+v_date timestamp;
+v_date2 timestamp;
 begin
 while v_id < 500000 loop
  v_id:=v_id+1;
  v_buyerid := round(dbms_random.value(1,1000000));
  select country.id into v_countryid from country, users where v_id = users.id and users.adress = country.name;
- v_date := to_date(trunc(dbms_random.value(2458573,2454833)),'J');
- insert into orders (id,buyerid,destcountryid,placed_at,arrived_on) values (v_id,v_buyerid,v_countryid,v_date,to_date(trunc(dbms_random.value(to_number(to_char(v_date,'J'))+1,to_number(to_char(v_date,'J'))+30)),'J'));
+ v_date := systimestamp - numtodsinterval(dbms_random.value * 5000, 'DAY');
+ v_date2 := v_date + numtodsinterval(dbms_random.value * 30, 'DAY');
+ insert into orders (id,buyerid,destcountryid,placed_at,arrived_on) values (v_id,v_buyerid,v_countryid,v_date,v_date2 );
  insert into activities (id,userid,name,time) values (v_id,v_buyerid,'placed order',v_date);
 end loop;
 end;
@@ -426,25 +420,49 @@ end;
 /
 
 
-create index i_username on Users(Username);
-/
-create index i_prodname on products(name);
-/
-create index i_searches on searches(search);
-/
-create index i_orderdest on orders(destcountryid);
-/
-create index i_orderdate on orders(placed_at);
-/
-create index i_activitiestype on activities(name);
-/
-create index i_activitiesdate on activities(time);
+create sequence batch_seq start with 510000;
 /
 
-SELECT COUNT(*) FROM country;
-SELECT COUNT(*) FROM countryconnections;
-SELECT * FROM products;
-SELECT username, products.name, products.price FROM users JOIN products ON users.id=products.sellerid;
-SELECT buyerid, arrived_on, destcountryid, country.name FROM orders JOIN country ON orders.destcountryid=country.id WHERE destcountryid>100;
-SELECT * FROM orderdetails;
-DESCRIBE orders;
+create sequence users_seq start with 1000000;
+/
+
+create sequence products_seq start with 650;
+/
+
+create sequence orderdets_seq start with 500000;
+/
+
+create sequence orders_seq start with 500000;
+/
+
+
+create index i_username on Users(Username);
+create index i_prodname on products(name);
+create index i_searches on searches(search);
+create index i_orderdest on orders(destcountryid);
+create index i_orderdate on orders(placed_at);
+create index i_activitiestype on activities(name);
+create index i_activitiesdate on activities(time);
+
+/* can be totally ignored 
+set serveroutput on ;
+DECLARE
+  l_ran_time TIMESTAMP;
+BEGIN
+  SELECT sysdate+
+         dbms_random.value(0, SYSDATE) 
+  INTO l_ran_time
+  FROM dual;
+  dbms_output.put_line(l_ran_time);
+END;
+/
+
+declare
+da timestamp;
+nu timestamp;
+begin
+da := systimestamp - numtodsinterval(dbms_random.value * 1000, 'DAY');
+nu := da + numtodsinterval(dbms_random.value * 10, 'DAY');
+dbms_output.put_line(da || ' ' || nu);
+end;
+*/

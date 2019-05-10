@@ -1,0 +1,113 @@
+CREATE OR REPLACE PACKAGE Math IS
+  /**
+   * Euler's constant
+   */
+  euler FLOAT := 2.71828182846;
+  
+  FUNCTION exp (x FLOAT) RETURN FLOAT;
+  FUNCTION max (vector ARRAY_1D) RETURN FLOAT;
+  FUNCTION sum (vector ARRAY_1D) RETURN FLOAT;
+  
+  FUNCTION softmax (x FLOAT) RETURN FLOAT;
+END Math;
+/
+
+CREATE OR REPLACE PACKAGE BODY Math AS
+  /**
+   * returns the mathematical operation of 'e ^ x'
+   * @param x the number that will specify what power to raise 'e' to
+   * @return the computation of 'e power x'
+   */
+  FUNCTION exp (x FLOAT) RETURN FLOAT AS
+  BEGIN
+    RETURN euler ** x;
+  END exp;
+  
+  /**
+   * returns the maximum number from a vector
+   * @param vector the vector that contains a series of numbers
+   * @return the maximum number from the series of numbers inside the vector
+   */
+  FUNCTION max (vector ARRAY_1D) RETURN FLOAT AS
+  currMax FLOAT;
+  BEGIN
+    /*
+     * exception treatment
+     * if the size of the vector is zero, return null
+     * if the size of the vector is one, return that one element
+     */
+    IF (vector.COUNT = 0) THEN
+      RETURN NULL;
+    ELSIF (vector.COUNT = 1) THEN
+      RETURN vector(1);
+    END IF;
+  
+    currMax := vector(1);
+    
+    FOR i IN 2 .. vector.COUNT LOOP
+      IF (vector(i) > currMax) THEN
+        currMax := vector(i);
+      END IF;
+    END LOOP;
+    
+    RETURN currMax;
+  END max;
+  
+  /**
+   * returns the sum of all elements of a vector
+   * @param vector the vector whose elements we have to add up
+   * @return the sum of all elements of the given vector
+   */
+  FUNCTION sum (vector ARRAY_1D) RETURN FLOAT AS
+  accumulator FLOAT;
+  BEGIN
+    /*
+     * exception treatment
+     * if the size of the vector is 0, then return null
+     * if the size of the vector is 1, then return the first element
+     */
+    IF (vector.COUNT = 0) THEN
+      RETURN NULL;
+    ELSIF (vector.COUNT = 1) THEN
+      RETURN vector(1);
+    END IF;
+    
+    accumulator := vector(1);
+    
+    FOR i IN 2 .. vector.COUNT LOOP
+      accumulator := accumulator + vector(i);
+    END LOOP;
+    
+    RETURN accumulator;
+  END sum;
+  
+  /**
+   * a 'map' type of function that applies the softmax function to 
+   * all vector elements
+   * @param vector the vector to apply the mapping to
+   * @return the vector after having applied the softmax mapping
+   */
+  FUNCTION softmax (vector ARRAY_1D) RETURN ARRAY_1D AS
+  vectorMax FLOAT;
+  vectorSum FLOAT; 
+  newVector ARRAY_1D;
+  BEGIN
+    IF (vector.COUNT = 0) THEN
+      RETURN NULL;
+    END IF;
+  
+    vectorMax := max(vector);
+    vectorSum := sum(vector);
+    
+    newVector := ARRAY_1D();
+    newVector.EXTEND(vector.COUNT);
+  
+    FOR i IN 1 .. newVector.COUNT LOOP
+      newVector(i) := exp(vector(i) - vectorMax) / vectorSum;
+    END LOOP;
+    
+    RETURN newVector;
+  END;
+  
+END Math;
+/

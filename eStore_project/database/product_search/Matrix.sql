@@ -36,13 +36,18 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   MEMBER PROCEDURE setData(data ARRAY_2D),
   
   MEMBER PROCEDURE setDataCell(i INTEGER, j INTEGER, val FLOAT),
-    
-  STATIC FUNCTION addUp(m1 MATRIX, m2 MATRIX) RETURN MATRIX,
-  STATIC FUNCTION addUp(m MATRIX, x FLOAT) RETURN MATRIX,
-  STATIC FUNCTION addUp(x FLOAT, m MATRIX) RETURN MATRIX,
   
-  MEMBER PROCEDURE addUp(m MATRIX),
-  MEMBER PROCEDURE addUp(x FLOAT),
+  STATIC FUNCTION manipulate(m1 MATRIX, m2 MATRIX, operation VARCHAR) RETURN MATRIX,
+  STATIC FUNCTION manipulate(m MATRIX, x FLOAT, operation VARCHAR) RETURN MATRIX,
+  STATIC FUNCTION manipulate(x FLOAT, m MATRIX, operation VARCHAR) RETURN MATRIX,
+  
+  MEMBER PROCEDURE manipulate(m MATRIX, operation VARCHAR),
+  MEMBER PROCEDURE manipulate(x FLOAT, operation VARCHAR),
+  
+  
+  STATIC FUNCTION transpose(m MATRIX) RETURN MATRIX,
+  
+  MEMBER PROCEDURE transpose,
   
   MEMBER PROCEDURE Print
 );
@@ -132,85 +137,210 @@ CREATE OR REPLACE TYPE BODY Matrix AS
     SELF.data(i)(j) := val;
   END setDataCell;
   
+  /*************************** BEGIN OF manipulate() methods ***************************/
+  
   /**
    * @param m1 the first matrix
    * @param m2 the second matrix
-   * @return the resulting matrix of the addition of the two given matrices
+   * @return the resulting matrix of the operation b/w the two given matrices
    */
-  STATIC FUNCTION addUp(m1 MATRIX, m2 MATRIX) RETURN MATRIX AS
+  STATIC FUNCTION manipulate(m1 MATRIX, m2 MATRIX, operation VARCHAR) RETURN MATRIX AS
   BEGIN 
-    IF (m1.noOfRows <> m2.noOfRows OR m1.noOfCols <> m2.noOfCols) THEN
-      RAISE_APPLICATION_ERROR(-20000, 'Matrix addition undefined for two matrices of different dimensions.');
+    IF (operation = 'add' OR operation = 'sub') AND 
+    (m1.noOfRows <> m2.noOfRows OR m1.noOfCols <> m2.noOfCols) THEN
+      RAISE_APPLICATION_ERROR(-20000, 'Matrix addition/subtraction undefined for two matrices of different dimensions.');
     ELSE
       DECLARE
         m MATRIX := MATRIX(m1.noOfRows, m1.noOfCols);
       BEGIN
-        FOR i IN m.data.FIRST .. m.data.LAST LOOP
-          FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
-            m.setDataCell(i, j, m1.data(i)(j) + m2.data(i)(j));
-          END LOOP;
-        END LOOP; 
+        IF (operation = 'add') THEN
+          FOR i IN m.data.FIRST .. m.data.LAST LOOP
+            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+              m.setDataCell(i, j, m1.data(i)(j) + m2.data(i)(j));
+            END LOOP;
+          END LOOP; 
+          
+        ELSIF (operation = 'sub') THEN
+          FOR i IN m.data.FIRST .. m.data.LAST LOOP
+            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+              m.setDataCell(i, j, m1.data(i)(j) - m2.data(i)(j));
+            END LOOP;
+          END LOOP; 
+          
+        ELSIF (operation = 'mul') THEN
+          IF (m1.noOfCols <> m2.noOfRows) THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Matrix dot product undefined for two matrices A and B where A.noOfCols != B.noOfRows.');
+          END IF;
+          
+          FOR i IN m.data.FIRST .. m.data.LAST LOOP
+            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+              DECLARE
+                  tempSum FLOAT := 0.0;
+              BEGIN
+                FOR k IN m1.data(i).FIRST .. m1.data(i).LAST LOOP
+                  tempSum := tempSum + m1.data(i)(k) * m2.data(k)(j);
+                END LOOP;
+                
+                m.setDataCell(i, j, tempSum);
+              END;
+            END LOOP;
+          END LOOP; 
+        END IF;
         
         RETURN m;
       END;
     END IF;
-  END addUp;
+  END manipulate;
   
   /**
    * @param m a matrix
-   * @param x the scalar value with which to perform the matrix scalar addition
-   * @return the new matrix after scalar addition
+   * @param x the scalar value with which to perform the matrix scalar operation
+   * @return the new matrix after scalar operation
    */
-  STATIC FUNCTION addUp(m MATRIX, x FLOAT) RETURN MATRIX AS
+  STATIC FUNCTION manipulate(m MATRIX, x FLOAT, operation VARCHAR) RETURN MATRIX AS
   mPrime MATRIX := MATRIX(m.noOfRows, m.noOfCols);
+  BEGIN
+    IF (operation = 'add') THEN
+      FOR i IN m.data.FIRST .. m.data.LAST LOOP
+        FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+          mPrime.setDataCell(i, j, m.data(i)(j) + x);
+        END LOOP;
+      END LOOP;
+      
+    ELSIF (operation = 'sub') THEN
+      FOR i IN m.data.FIRST .. m.data.LAST LOOP
+        FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+          mPrime.setDataCell(i, j, m.data(i)(j) - x);
+        END LOOP;
+      END LOOP;
+      
+    ELSIF (operation = 'mul') THEN
+      FOR i IN m.data.FIRST .. m.data.LAST LOOP
+        FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+          mPrime.setDataCell(i, j, m.data(i)(j) * x);
+        END LOOP;
+      END LOOP;
+    END IF;
+    
+    RETURN mPrime;
+  END manipulate;
+  
+  /**
+   * @param x the scalar value with which to perform the matrix scalar operation
+   * @param m a matrix
+   * @return the new matrix after scalar operation
+   */
+  STATIC FUNCTION manipulate(x FLOAT, m MATRIX, operation VARCHAR) RETURN MATRIX AS
+  BEGIN
+    RETURN Matrix.manipulate(m, x, operation);
+  END manipulate;
+  
+  /**
+   * @param m the matrix to perform the operation with
+   */
+  MEMBER PROCEDURE manipulate(m MATRIX, operation VARCHAR) AS
+  BEGIN
+    IF (SELF.noOfRows <> m.noOfRows OR SELF.noOfCols <> m.noOfCols) THEN
+      RAISE_APPLICATION_ERROR(-20000, 'Matrix addition/subtraction/multiplication undefined for two matrices of different dimensions.');
+    ELSE
+      IF (operation = 'add') THEN    
+        FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+          FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+            SELF.data(i)(j) := SELF.data(i)(j) + m.data(i)(j);
+          END LOOP;
+        END LOOP;
+        
+      ELSIF (operation = 'sub') THEN
+        FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+          FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+            SELF.data(i)(j) := SELF.data(i)(j) - m.data(i)(j);
+          END LOOP;
+        END LOOP;
+        
+      ELSIF (operation = 'mul') THEN
+          IF (SELF.noOfCols <> m.noOfRows) THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Matrix dot product undefined for two matrices A and B where A.noOfCols != B.noOfRows.');
+          END IF;
+          
+          DECLARE
+            mPrime MATRIX := MATRIX(SELF.noOfRows, m.noOfCols);
+          BEGIN
+            FOR i IN mPrime.data.FIRST .. mPrime.data.LAST LOOP
+              FOR j IN mPrime.data(i).FIRST .. mPrime.data(i).LAST LOOP
+                DECLARE
+                    tempSum FLOAT := 0.0;
+                BEGIN
+                  FOR k IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+                    tempSum := tempSum + SELF.data(i)(k) * m.data(k)(j);
+                  END LOOP;
+                  
+                  mPrime.setDataCell(i, j, tempSum);
+                END;
+              END LOOP;
+            END LOOP; 
+            
+            SELF := mPrime;
+          END;
+        END IF;
+      
+    END IF;
+  END manipulate;
+  
+  /**
+   * @param x the scalar to perform the operation with
+   */
+  MEMBER PROCEDURE manipulate(x FLOAT, operation VARCHAR) AS
+  BEGIN
+    IF (operation = 'add') THEN
+      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+        FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+          SELF.data(i)(j) := SELF.data(i)(j) + x;  
+        END LOOP;
+      END LOOP;
+      
+    ELSIF (operation = 'sub') THEN
+      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+        FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+          SELF.data(i)(j) := SELF.data(i)(j) - x;  
+        END LOOP;
+      END LOOP;
+      
+    ELSIF (operation = 'mul') THEN
+      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+        FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+          SELF.data(i)(j) := SELF.data(i)(j) * x;  
+        END LOOP;
+      END LOOP;
+    END IF;
+  END manipulate;
+  
+  /*************************** END OF manipulate() methods ***************************/
+
+
+  /*************************** BEGIN OF transpose() methods ***************************/
+
+  /**
+   * @param m the matrix to get the transpose of
+   * @return the transposed version of the given matrix
+   */
+  STATIC FUNCTION transpose(m MATRIX) RETURN MATRIX AS
+  mPrime MATRIX := MATRIX(m.noOfCols, m.noOfRows);
   BEGIN
     FOR i IN m.data.FIRST .. m.data.LAST LOOP
       FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
-        mPrime.setDataCell(i, j, m.data(i)(j) + x);
+        mPrime.setDataCell(j, i, m.data(i)(j));
       END LOOP;
     END LOOP;
     
     RETURN mPrime;
-  END addUp;
+  END transpose;
   
-  /**
-   * @param x the scalar value with which to perform the matrix scalar addition
-   * @param m a matrix
-   * @return the new matrix after scalar addition
-   */
-  STATIC FUNCTION addUp(x FLOAT, m MATRIX) RETURN MATRIX AS
+  MEMBER PROCEDURE transpose AS
   BEGIN
-    RETURN Matrix.addUp(m, x);
-  END addUp;
-  
-  /**
-   * @param m the matrix to perform the addition with
-   */
-  MEMBER PROCEDURE addUp(m MATRIX) AS
-  BEGIN
-    IF (SELF.noOfRows <> m.noOfRows OR SELF.noOfCols <> m.noOfCols) THEN
-      RAISE_APPLICATION_ERROR(-20000, 'Matrix addition undefined for two matrices of different dimensions.');
-    ELSE
-      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
-        FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
-          SELF.data(i)(j) := SELF.data(i)(j) + m.data(i)(j);
-        END LOOP;
-      END LOOP;
-    END IF;
-  END addUp;
-  
-  /**
-   * @param x the scalar to perform the addition with
-   */
-  MEMBER PROCEDURE addUp(x FLOAT) AS
-  BEGIN
-    FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
-      FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
-        SELF.data(i)(j) := SELF.data(i)(j) + x;  
-      END LOOP;
-    END LOOP;
-  END addUp;
-  
+    SELF.setData(Matrix.transpose(SELF).getData());
+  END transpose;
+
+  /*************************** END OF transpose() methods ***************************/  
   /**
    * prints the contents of the matrix
    */
@@ -229,10 +359,18 @@ END;
 /*
  * Usage example
  */
-/*
+
+SET SERVEROUTPUT ON;
+
 DECLARE
   myMatrix MATRIX := MATRIX(4, 4);
   myNewMatrix MATRIX := MATRIX(4, 4);
+  myMatrix2 MATRIX := MATRIX(6, 4);
+  myNewMatrix2 MATRIX := MATRIX(4, 6);
+  temp FLOAT := 0.0;
+  
+  myMatrix3 MATRIX := MATRIX(2, 2);
+  myMatrix4 MATRIX := MATRIX(2, 2);
 BEGIN
   FOR i IN myMatrix.data.FIRST .. myMatrix.data.LAST LOOP
     FOR j IN myMatrix.data(i).FIRST .. myMatrix.data(i).LAST LOOP
@@ -240,11 +378,42 @@ BEGIN
     END LOOP;
   END LOOP;
   
-  myNewMatrix := MATRIX.addUp(myMatrix, 11.0);
-  myNewMatrix := MATRIX.addUp(myMatrix, myNewMatrix);
-  myNewMatrix.addUp(100.0);
+  myNewMatrix := MATRIX.manipulate(myMatrix, 11.0, 'add');
+  myNewMatrix := MATRIX.manipulate(myMatrix, myNewMatrix, 'add');
+  myNewMatrix.manipulate(100.0, 'add');
   
-  myNewMatrix.print();
+  FOR i IN myMatrix2.data.FIRST .. myMatrix2.data.LAST LOOP
+    FOR j IN myMatrix2.data(i).FIRST .. myMatrix2.data(i).LAST LOOP
+      myMatrix2.setDataCell(i, j, temp);
+    END LOOP;
+    
+    temp := temp + 1;
+  END LOOP;
+  
+  myNewMatrix2 := Matrix.transpose(myMatrix2);
+  
+  myMatrix2.print();
+  DBMS_OUTPUT.PUT_LINE('');
+  myNewMatrix2.print();
+  
+  myMatrix3.setDataCell(1, 1, 1);
+  myMatrix3.setDataCell(1, 2, 2);
+  myMatrix3.setDataCell(2, 1, 3);
+  myMatrix3.setDataCell(2, 2, 4);
+  
+  myMatrix4.setDataCell(1, 1, 11);
+  myMatrix4.setDataCell(1, 2, 12);
+  myMatrix4.setDataCell(2, 1, 13);
+  myMatrix4.setDataCell(2, 2, 14);
+  
+  DBMS_OUTPUT.PUT_LINE('Matrix A: ');
+  myMatrix3.print();
+  
+  DBMS_OUTPUT.PUT_LINE('Matrix B: ');
+  myMatrix4.print();
+  
+  DBMS_OUTPUT.PUT_LINE('A . B: ');
+  myMatrix3.manipulate(myMatrix4, 'mul');
+  myMatrix3.print();
 END;
 /
-*/
