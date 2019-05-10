@@ -1,11 +1,19 @@
 drop table Users;
+/
 drop table Activities;
+/
 drop table Country;
+/
 drop table CountryConnections;
+/
 drop table Orders;
+/
 drop table Orderdetails;
+/
 drop table products;
+/
 drop table searches;
+/
 
 create table Users (
 ID number(38,0) primary key not null,
@@ -220,7 +228,7 @@ end if;
 v_duplicat:=' ';
 end loop;
 end;
-
+/
 
 
 
@@ -246,7 +254,7 @@ v_id:=v_id+1;
 insert into country (id,name) values (v_id,tari(v_id));
 end loop;
 end;
-
+/
 
 
 declare
@@ -262,7 +270,7 @@ v_id2:=v_id2+1;
 end loop;
 end loop;
 end;
-
+/
 
 
 
@@ -419,10 +427,24 @@ end;
 
 
 create index i_username on Users(Username);
+/
 create index i_prodname on products(name);
+/
 create index i_searches on searches(search);
+/
 create index i_orderdest on orders(destcountryid);
+/
 create index i_orderdate on orders(placed_at);
+/
 create index i_activitiestype on activities(name);
+/
 create index i_activitiesdate on activities(time);
+/
 
+SELECT COUNT(*) FROM country;
+SELECT COUNT(*) FROM countryconnections;
+SELECT * FROM products;
+SELECT username, products.name, products.price FROM users JOIN products ON users.id=products.sellerid;
+SELECT buyerid, arrived_on, destcountryid, country.name FROM orders JOIN country ON orders.destcountryid=country.id WHERE destcountryid>100;
+SELECT * FROM orderdetails;
+DESCRIBE orders;
