@@ -27,6 +27,8 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   CONSTRUCTOR FUNCTION Matrix(noOfRows INTEGER, noOfCols INTEGER)
     RETURN SELF AS RESULT,
     
+  MEMBER PROCEDURE randomizeMatrix(minBound FLOAT, maxBound FLOAT),
+    
   MEMBER FUNCTION getNoOfRows RETURN INTEGER,
   MEMBER FUNCTION getNoOfCols RETURN INTEGER,
   MEMBER FUNCTION getData RETURN ARRAY_2D,
@@ -48,6 +50,8 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   STATIC FUNCTION transpose(m MATRIX) RETURN MATRIX,
   
   MEMBER PROCEDURE transpose,
+  
+  STATIC FUNCTION colVectorSoftmax(m MATRIX) RETURN MATRIX,
   
   MEMBER PROCEDURE Print
 );
@@ -78,6 +82,20 @@ CREATE OR REPLACE TYPE BODY Matrix AS
     
     RETURN;
   END Matrix;
+  
+  /*
+   * randomize the current object's data member
+   * @param minBound the lower bound of the interval of random numbers to be generated
+   * @param maxBound the upper bound of the interval of random numbers to be generated
+   */
+  MEMBER PROCEDURE randomizeMatrix (minBound FLOAT, maxBound FLOAT) AS
+  BEGIN
+    FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+      FOR j IN SELF.data(i).FIRST .. SELF.data(i).LAST LOOP
+        SELECT DBMS_RANDOM.VALUE(minBound, maxBound) INTO SELF.data(i)(j) FROM DUAL;
+      END LOOP;
+    END LOOP;
+  END;
   
   /*
    * @return the noOfRows
@@ -341,6 +359,52 @@ CREATE OR REPLACE TYPE BODY Matrix AS
   END transpose;
 
   /*************************** END OF transpose() methods ***************************/  
+  
+  /**
+   * applies the softmax function to a column vector
+   * @param m the matrix representing the column vector
+   * @return the new matrix representing the 'softmaxed' col. vector
+   */
+  STATIC FUNCTION colVectorSoftmax(m MATRIX) RETURN MATRIX AS
+  colVector ARRAY_1D;
+  newM MATRIX;
+  BEGIN
+    /*
+     * exception treatment
+     * if there are no rows (i.e the matrix is empty) 
+     * or if the no. of columns is not 1 (and therefore the matrix is
+     * not a column vector), then return null
+     */
+    IF (m IS NULL OR m.noOfRows = 0 OR m.noOfCols <> 1) THEN
+      RETURN null;
+    END IF;
+    
+    /*
+     * get the 1-dimensional array equivalent of the col. vector
+     */
+    colVector := ARRAY_1D();
+    colVector.EXTEND(m.data.COUNT);
+    FOR i IN 1 .. m.data.COUNT LOOP
+      colVector(i) := m.data(i)(1);
+    END LOOP;
+    
+    /*
+     * apply Math.softmax() to the array equiv. of the col. vector
+     */
+    colVector := Math.softmax(colVector);
+    
+    /*
+     * get the matrix equivalent of the 1-dimensional array
+     * (keeping it as a column vector)
+     */
+    newM := MATRIX(colVector.COUNT, 1);
+    FOR i IN 1 .. colVector.COUNT LOOP
+      newM.setDataCell(i, 1, colVector(i));
+    END LOOP;
+    
+    RETURN newM;
+  END colVectorSoftmax;
+  
   /**
    * prints the contents of the matrix
    */
@@ -371,6 +435,8 @@ DECLARE
   
   myMatrix3 MATRIX := MATRIX(2, 2);
   myMatrix4 MATRIX := MATRIX(2, 2);
+  
+  colVecMatrix MATRIX := MATRIX(4, 1);
 BEGIN
   FOR i IN myMatrix.data.FIRST .. myMatrix.data.LAST LOOP
     FOR j IN myMatrix.data(i).FIRST .. myMatrix.data(i).LAST LOOP
@@ -415,5 +481,15 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE('A . B: ');
   myMatrix3.manipulate(myMatrix4, 'mul');
   myMatrix3.print();
+  
+  DBMS_OUTPUT.PUT_LINE('Column vector matrix: ');
+  FOR i IN 1 .. colVecMatrix.noOfRows LOOP
+    colVecMatrix.data(i)(1) := i;
+    DBMS_OUTPUT.PUT_LINE(colVecMatrix.data(i)(1));
+  END LOOP;
+  
+  DBMS_OUTPUT.PUT_LINE('Softmaxed col. vector matrix: ');
+  colVecMatrix := MATRIX.colVectorSoftmax(colVecMatrix);
+  colVecMatrix.print();
 END;
 /
