@@ -6,6 +6,26 @@ drop table Orders;
 drop table Orderdetails;
 drop table products;
 drop table searches;
+drop table blacklistedPasses;
+drop table PassResetTable;
+drop sequence batch_seq;
+drop sequence passreset_seq;
+drop sequence users_seq;
+drop sequence products_seq;
+drop sequence orderdets_seq;
+drop sequence orders_seq;
+drop index i_passreset;
+
+CREATE TABLE blacklistedPasses (
+  path VARCHAR(20) PRIMARY KEY
+);
+
+create table PassResetTable(
+id number(28,0),
+code varchar(1000),
+issued timestamp
+);
+
 
 create table Users (
 ID number(38,0) primary key not null,
@@ -420,6 +440,8 @@ end;
 /
 
 
+
+
 create sequence batch_seq start with 510000;
 /
 
@@ -436,7 +458,10 @@ create sequence orders_seq start with 500000;
 /
 
 
+
 create index i_username on Users(Username);
+create index i_login on users(username,password);
+create index i_register on users(username,email);
 create index i_prodname on products(name);
 create index i_searches on searches(search);
 create index i_orderdest on orders(destcountryid);
@@ -466,3 +491,11 @@ nu := da + numtodsinterval(dbms_random.value * 10, 'DAY');
 dbms_output.put_line(da || ' ' || nu);
 end;
 */
+
+
+
+
+create index i_passrest on passresettable(issued);
+
+create sequence passreset_seq start with 1;
+/
