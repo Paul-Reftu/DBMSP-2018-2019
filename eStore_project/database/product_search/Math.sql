@@ -5,6 +5,7 @@ CREATE OR REPLACE PACKAGE Math IS
   euler FLOAT := 2.71828182846;
   
   TYPE stringToIntMap IS TABLE OF INTEGER INDEX BY VARCHAR(100);
+  TYPE intToIntMap IS TABLE OF INTEGER INDEX BY PLS_INTEGER;
   
   FUNCTION exp (x FLOAT) RETURN FLOAT;
   FUNCTION maxElem (vector ARRAY_1D) RETURN FLOAT;
@@ -12,6 +13,7 @@ CREATE OR REPLACE PACKAGE Math IS
   
   FUNCTION randomVector (vectorSize INTEGER, minBound FLOAT, 
     maxBound FLOAT) RETURN ARRAY_1D;
+  FUNCTION createVector(noOfElems INT, val FLOAT) RETURN ARRAY_1D;
   
   FUNCTION softmax (vector ARRAY_1D) RETURN ARRAY_1D;
 END Math;
@@ -110,6 +112,38 @@ CREATE OR REPLACE PACKAGE BODY Math AS
     
     RETURN vector;
   END randomVector;
+  
+  /**
+   * create a vector of the given size, initialized w/ the value given
+   * @param noOfElems the no. of elements the vector should have
+   * @param val the value each data cell of the vector should have
+   * @return the resulting vector
+   */
+  FUNCTION createVector(noOfElems INT, val FLOAT) RETURN ARRAY_1D AS
+  vector ARRAY_1D;
+  BEGIN
+    IF noOfElems < 0 THEN
+      RAISE_APPLICATION_ERROR(-20002, 'Cannot create a vector of negative size!');
+    ELSIF noOfElems = 0 THEN
+      RETURN null;
+    END IF;
+    
+    vector := ARRAY_1D();
+    vector.EXTEND(1);
+    vector(1) := val;
+    
+    IF noOfElems = 1 THEN
+      RETURN vector;
+    END IF;
+    
+    /*
+     * replicate the element on the position specified by the 2nd param.
+     * the no. of times specified by the 1st param
+     */
+    vector.EXTEND(noOfElems - 1, 1);
+    
+    RETURN vector;
+  END createVector;
   
   /**
    * a 'map' type of function that applies the softmax function to 

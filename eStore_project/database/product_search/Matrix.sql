@@ -53,6 +53,12 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   
   STATIC FUNCTION colVectorSoftmax(m MATRIX) RETURN MATRIX,
   
+  STATIC FUNCTION exp(m MATRIX) RETURN MATRIX,
+  
+  STATIC FUNCTION elemSum(m MATRIX) RETURN FLOAT,
+  
+  MEMBER PROCEDURE appendColVector(vector ARRAY_1D),
+  
   MEMBER PROCEDURE Print
 );
 /
@@ -404,6 +410,84 @@ CREATE OR REPLACE TYPE BODY Matrix AS
     
     RETURN newM;
   END colVectorSoftmax;
+  
+  /**
+   * apply the exp() function on each element of the given matrix
+   *    and return the resulting matrix
+   * @param m the matrix to consider
+   * @return the new matrix after applying exp() on each data cell
+   */
+  STATIC FUNCTION exp(m MATRIX) RETURN MATRIX AS
+  mPrime MATRIX := MATRIX(m.noOfRows, m.noOfCols);
+  BEGIN
+    FOR i IN 1 .. m.noOfRows LOOP
+      FOR j IN 1 .. m.noOfCols LOOP
+        mPrime.setDataCell(i, j, Math.exp(m.data(i)(j)));
+      END LOOP; 
+    END LOOP;
+    
+    RETURN mPrime;
+  END exp;
+  
+  /**
+   * get the total sum of all data cells in the given matrix
+   * @param m the matrix to consider
+   * @return the sum of all matrix data cells
+   */
+  STATIC FUNCTION elemSum(m MATRIX) RETURN FLOAT AS
+  elemSum FLOAT := 0.0;
+  BEGIN
+    FOR i IN 1 .. m.noOfRows LOOP
+      FOR j IN 1 .. m.noOfCols LOOP
+        elemSum := elemSum + m.data(i)(j);
+      END LOOP; 
+    END LOOP;
+    
+    RETURN elemSum;
+  END elemSum;  
+  
+  /**
+   * append a column vector to our matrix object
+   * @param vector the col. vector to add
+   */
+  MEMBER PROCEDURE appendColVector(vector ARRAY_1D) AS
+  BEGIN
+    /*
+     * if the given vector is null, then return w/o having done any operation
+     */
+    IF vector IS NULL THEN
+      RETURN;
+    END IF;
+    
+    /*
+     * if our target matrix has no rows and/or columns, then
+     * extend the no. of rows w/ the vector's size and the no.
+     * of columns w/ 1
+     */
+    IF SELF.noOfRows = 0 OR SELF.noOfCols = 0 THEN
+      SELF.noOfRows := vector.COUNT;
+      SELF.noOfCols := 1;
+      SELF.data.EXTEND(vector.COUNT);
+      
+      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+        SELF.data(i).EXTEND(1);
+      END LOOP;
+    END IF;
+    
+    /*
+     * if the vector's size is not equal to the target matrix's
+     * no. of rows, then throw an exception
+     */
+    IF vector.COUNT <> SELF.noOfRows THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Size of given col. vector is not equal to the no. of rows of the target matrix.');
+    END IF;
+    
+    SELF.noOfCols := SELF.noOfCols + 1;
+    FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+      SELF.data(i).EXTEND(1);
+      SELF.data(i)(SELF.data.COUNT) := vector(i);
+    END LOOP;
+  END appendColVector;
   
   /**
    * prints the contents of the matrix
