@@ -1,6 +1,14 @@
 CREATE OR REPLACE TYPE STRING_TABLE IS TABLE OF VARCHAR(10000);
 / 
 
+CREATE OR REPLACE TYPE INTEGER_TABLE IS TABLE OF INTEGER;
+/
+
+/*
+DROP TYPE NeuralNetwork;
+/
+*/
+
 CREATE OR REPLACE TYPE NeuralNetwork AS OBJECT
 (
   /*
@@ -25,12 +33,12 @@ CREATE OR REPLACE TYPE NeuralNetwork AS OBJECT
   /*
    * all words in our given corpus
    */
-  corpusWords ARRAY_1D,
+  corpusWords MapStringInt,
   /*
    * a mapping from String -> Integer that counts the no. of occurrences 
    * of each word in our corpus
    */
-  wordCountMap Math.stringToIntMap,
+  wordCountMap MapStringInt,
   
   /*
    * the rate of learning of our Neural Network, which is applied as 
@@ -43,53 +51,59 @@ CREATE OR REPLACE TYPE NeuralNetwork AS OBJECT
    */
   windowSize INTEGER,
   loss FLOAT,
+  h MATRIX,
+  u MATRIX,
+  y MATRIX,
   
-  CONSTRUCTOR FUNCTION NeuralNetwork(corpusWords ARRAY_1D, 
-    corpusVocabSize INTEGER) RETURN SELF AS RESULT,
-    
+  CONSTRUCTOR FUNCTION NeuralNetwork RETURN SELF AS RESULT,
+  MEMBER PROCEDURE setH(h MATRIX),
+  MEMBER PROCEDURE setU(u MATRIX),
+  MEMBER PROCEDURE setY(y MATRIX),
   MEMBER FUNCTION processCorpus(corpus VARCHAR) RETURN STRING_TABLE,
-  MEMBER FUNCTION feedForward(x MATRIX) RETURN MATRIX,
+  MEMBER PROCEDURE feedForward(x MATRIX, retY IN OUT MATRIX),
   MEMBER PROCEDURE backPropagation(x MATRIX, expectedY MATRIX),
   MEMBER PROCEDURE preTraining(sentences STRING_TABLE),
   MEMBER PROCEDURE training(noOfEpochs INT),
-  MEMBER FUNCTION predict(word FLOAT, noOfPredictions INT) RETURN MATRIX
+  MEMBER PROCEDURE predict(word VARCHAR, noOfPredictions INT, predictions IN OUT STRING_TABLE)
   
 );
 /
 
 CREATE OR REPLACE TYPE BODY NeuralNetwork AS
-  CONSTRUCTOR FUNCTION NeuralNetwork (corpusWords ARRAY_1D,
-    corpusVocabSize INTEGER) RETURN SELF AS RESULT AS
+  /**
+   * construct an object of type 'NeuralNetwork'
+   * @return an initialized Neural Network object 
+   */
+  CONSTRUCTOR FUNCTION NeuralNetwork RETURN SELF AS RESULT AS
   BEGIN
     SELF.noOfNeurons_HL := 5;
     /*
      * initialize xTrain and yTrain 
      */ 
-    --SELF.xTrain := MATRIX();
-    --SELF.yTrain := MATRIX();
+    SELF.xTrain := MATRIX();
+    SELF.yTrain := MATRIX();
     
     SELF.windowSize := 2;
     SELF.learningRate := 0.01;
   
-    SELF.corpusWords := corpusWords;
-    SELF.corpusVocabSize := corpusVocabSize;
-    
-    /*
-     * the weights matrix for the input -> hidden layer ought to be
-     * of size (corpusVocabSize x noOfNeurons_HL)
-     */
-    SELF.weights_IH := MATRIX(SELF.corpusVocabSize, SELF.noOfNeurons_HL);
-    SELF.weights_IH.randomizeMatrix();
-    
-    /*
-     * the weights matrix for the hidden -> output layer ought to be
-     * of size (noOfNeurons_HL x corpusVocabSize)
-     */
-    SELF.weights_HO := MATRIX(SELF.noOfNeurons_HL, SELF.corpusVocabSize);
-    SELF.weights_HO.randomizeMatrix();
-  
-    -- initialize wordCountMap
+    SELF.corpusWords := MapStringInt();
+    SELF.wordCountMap := MapStringInt();
   END NeuralNetwork;
+  
+  MEMBER PROCEDURE setH(h MATRIX) AS
+  BEGIN
+    SELF.h := h;
+  END setH;
+  
+  MEMBER PROCEDURE setU(u MATRIX) AS
+  BEGIN
+    SELF.u := u;
+  END setU;
+  
+  MEMBER PROCEDURE setY(y MATRIX) AS
+  BEGIN
+    SELF.y := y;
+  END setY;
   
   /**
    * processes given corpus and collect the inner sentences
@@ -113,32 +127,35 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
   END processCorpus;
   
   MEMBER PROCEDURE preTraining(sentences STRING_TABLE) AS
-  trainingData Math.stringToIntMap;
+  trainingData MapStringInt;
   words STRING_TABLE;
-  vocabulary Math.intToIntMap;
+  vocabulary INTEGER_TABLE;
   BEGIN
-    trainingData := Math.stringToIntMap();
+    trainingData := MapStringInt();
     words := STRING_TABLE();
-    vocabulary := Math.intToIntMap();
+    vocabulary := INTEGER_TABLE();
     
     FOR i IN sentences.FIRST .. sentences.LAST LOOP
       SELECT LOWER(REGEXP_SUBSTR(sentences(i), '[^ ]+', 1, LEVEL))
         BULK COLLECT INTO words FROM DUAL CONNECT BY
         LOWER(REGEXP_SUBSTR(sentences(i), '[^ ]+', 1, LEVEL)) IS NOT NULL;
         
-      FOR j IN words.FIRST .. words.LAST LOOP
+      FOR j IN 1 .. words.COUNT LOOP
         BEGIN
-          trainingData(words(j)) := trainingData(words(j)) + 1;
-          EXCEPTION WHEN NO_DATA_FOUND THEN
-          trainingData(words(j)) := 1;
+          IF trainingData.getVal(words(j)) IS NOT NULL THEN
+            trainingData.setVal(words(j), trainingData.getVal(words(j)) + 1);
+          ELSE
+            trainingData.addNewPair(PairStringInt(words(j), 1));
+          END IF;
         END;
       END LOOP;
     END LOOP;
     
-    SELF.corpusVocabSize := trainingData.COUNT;
+    SELF.corpusVocabSize := trainingData.data.COUNT;
+    vocabulary.EXTEND(SELF.corpusVocabSize);
     
-    FOR i IN trainingData.FIRST .. trainingData.LAST LOOP
-      vocabulary(trainingData(i)) := i;
+    FOR i IN 1 .. trainingData.data.COUNT LOOP
+      vocabulary(trainingData.data(i).snd) := i;
     END LOOP;
     
     FOR i IN sentences.FIRST .. sentences.LAST LOOP
@@ -156,7 +173,7 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
            * context words
            */
           centerWord := Math.createVector(SELF.corpusVocabSize, 0.0);
-          centerWord(vocabulary(words(j))) := 1;
+          centerWord(vocabulary(words(j))) := 1.0;
           
           wordContext := Math.createVector(SELF.corpusVocabSize, 0.0);
           
@@ -164,7 +181,7 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
            * encode the context words inside the current window
            */
           FOR k IN (j - SELF.windowSize) .. (j + SELF.windowSize) LOOP
-            IF j <> k AND k > 0 AND k < words.LAST THEN
+            IF j <> k AND k >= 1 AND k < words.COUNT THEN
               wordContext(vocabulary(words(k))) := wordContext(vocabulary(words(k))) + 1;
             END IF;
           END LOOP;
@@ -178,6 +195,26 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
         END;
       END LOOP;
     END LOOP;
+    
+    /*
+     * the weights matrix for the input -> hidden layer ought to be
+     * of size (corpusVocabSize x noOfNeurons_HL)
+     */
+    SELF.weights_IH := MATRIX(SELF.corpusVocabSize, SELF.noOfNeurons_HL);
+    SELF.weights_IH.randomizeMatrix(-0.8, 0.8);
+    
+    /*
+     * the weights matrix for the hidden -> output layer ought to be
+     * of size (noOfNeurons_HL x corpusVocabSize)
+     */
+    SELF.weights_HO := MATRIX(SELF.noOfNeurons_HL, SELF.corpusVocabSize);
+    SELF.weights_HO.randomizeMatrix(-0.8, 0.8);
+    
+    SELF.corpusWords := trainingData;
+    
+    FOR i IN 1 .. SELF.corpusWords.data.COUNT LOOP
+      SELF.wordCountMap.setVal(SELF.corpusWords.data(i).fst, i);
+    END LOOP;
   END preTraining;
   
   /**
@@ -185,7 +222,7 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
    * @param x the column vector that contains all inputs
    * @return the prediction of the Neural Network based on its curr. ability
    */
-  MEMBER FUNCTION feedForward(x MATRIX) RETURN MATRIX AS
+  MEMBER PROCEDURE feedForward(x MATRIX, retY IN OUT MATRIX) AS
   h MATRIX;
   u MATRIX;
   y MATRIX;
@@ -205,7 +242,13 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
      */
     y := MATRIX.colVectorSoftmax(u);
     
-    RETURN y;
+    SELF.setH(h);
+    SELF.setU(u);
+    SELF.setY(y);
+    
+    IF retY IS NOT NULL THEN
+      retY := y;
+    END IF;
   END feedForward;
   
   /**
@@ -263,25 +306,26 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
    */
   MEMBER PROCEDURE training(noOfEpochs INT) AS
   noOfContextWords INT := 0;
+  y MATRIX;
   BEGIN
     FOR i IN 1 .. noOfEpochs LOOP
       SELF.loss := 0.0;
       
       FOR j IN 1 .. SELF.xTrain.noOfRows LOOP
-        feedForward(SELF.xTrain.data(j));
-        backPropagation(SELF.xTrain.data(j), SELF.yTrain.data(j));
+        feedForward(MATRIX.colVectorToMatrix(SELF.xTrain.data(j)), y);
+        backPropagation(MATRIX.colVectorToMatrix(SELF.xTrain.data(j)), 
+          MATRIX.colVectorToMatrix(SELF.yTrain.data(j)));
         noOfContextWords := 0;
         
         FOR m IN 1 .. SELF.corpusVocabSize LOOP
-          IF (SELF.yTrain.data(j)(m) > 0) THEN
+          IF (SELF.yTrain.data(j)(m) = 1.0) THEN
             SELF.loss := SELF.loss + (-1) * SELF.u.data(m)(1);
             noOfContextWords := noOfContextWords +1;
           END IF;
         END LOOP;
         
         SELF.loss := SELF.loss + noOfContextWords * 
-          LOG(MATRIX.elemSum(MATRIX.exp(SELF.u)));
-        noOfContextWords := noOfContextWords + 1;
+          LOG(2, MATRIX.elemSum(MATRIX.exp(SELF.u)));
           
         SELF.learningRate := SELF.learningRate * 
           (1 / (1 + SELF.learningRate * i));
@@ -289,6 +333,46 @@ CREATE OR REPLACE TYPE BODY NeuralNetwork AS
     END LOOP;
   END training;
   
+  MEMBER PROCEDURE predict(word VARCHAR, noOfPredictions INT, predictions IN OUT STRING_TABLE) AS
+  wordIndex INTEGER;
+  wordVec ARRAY_1D;
+  wordVecMatrix MATRIX;
+  nnOutput MATRIX;
+  nnOutputTranslation INTEGER_TABLE := INTEGER_TABLE();
+  foundContextWords STRING_TABLE := STRING_TABLE();
+  BEGIN
+    wordIndex := SELF.wordCountMap.getVal(word);
+    wordVec := ARRAY_1D();
+    wordVec := Math.createVector(SELF.corpusVocabSize, 0.0);
+    wordVec(wordIndex) := 1.0;
+    
+    wordVecMatrix := MATRIX.colVectorToMatrix(wordVec);
+    feedForward(wordVecMatrix, nnOutput);
+    
+    nnOutputTranslation.EXTEND(SELF.corpusVocabSize);
+    
+    FOR i IN 1 .. SELF.corpusVocabSize LOOP
+      nnOutputTranslation(nnOutput.data(i)(1)) := i;
+    END LOOP;
+    
+    foundContextWords.EXTEND(1);
+    
+    FOR i IN REVERSE nnOutputTranslation.FIRST .. nnOutputTranslation.LAST LOOP
+      foundContextWords(foundContextWords.COUNT) := 
+        SELF.corpusWords.data(nnOutputTranslation(i)).fst;
+        
+      IF foundContextWords.COUNT >= noOfPredictions THEN
+        EXIT;
+      END IF;
+      
+      foundContextWords.EXTEND(1);
+    END LOOP; 
+    
+    predictions := foundContextWords;
+    
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20004, 'The word whose context we are trying to predict is not in our dictionary!');
+  END predict;
 END;
 /
 
@@ -307,4 +391,29 @@ SELECT REGEXP_SUBSTR('SMITH    ALLEN    WARD     JONES', '[^ ]+', 1, LEVEL)
   FROM DUAL CONNECT BY REGEXP_SUBSTR('SMITH ALLEN WARD JONES', '[^ ]+', 1, LEVEL)
   IS NOT NULL;
   
+/*
+ * test runs
+ */
+DECLARE
+myTab STRING_TABLE := STRING_TABLE();
+myMap MapStringInt := MapStringInt();
+BEGIN
+  myTab.EXTEND(5);
+  
+  myTab(1) := 'Alex';
+  myTab(2) := 'Chris';
+  myTab(3) := 'd';
+  myTab(4) := 'e';
+  myTab(5) := 'Ben';
+  
+  FOR i IN 1 .. myTab.COUNT LOOP
+    DBMS_OUTPUT.PUT_LINE(myTab(i));
+  END LOOP; 
 
+  myMap.addNewPair(PairStringInt('Alex', 10));
+  myMap.addNewPair(PairStringInt('Chris', 5));
+  myMap.addNewPair(PairStringInt('Ben', 3));
+  
+  DBMS_OUTPUT.PUT_LINE(myMap.getVal(myTab(5)));
+END;
+  

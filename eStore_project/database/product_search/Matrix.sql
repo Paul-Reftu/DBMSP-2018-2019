@@ -24,6 +24,8 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   noOfCols INTEGER,
   data ARRAY_2D,
   
+  CONSTRUCTOR FUNCTION Matrix RETURN SELF AS RESULT,
+  
   CONSTRUCTOR FUNCTION Matrix(noOfRows INTEGER, noOfCols INTEGER)
     RETURN SELF AS RESULT,
     
@@ -59,6 +61,8 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
   
   MEMBER PROCEDURE appendColVector(vector ARRAY_1D),
   
+  STATIC FUNCTION colVectorToMatrix(v ARRAY_1D) RETURN MATRIX,
+  
   MEMBER PROCEDURE Print
 );
 /
@@ -68,6 +72,19 @@ CREATE OR REPLACE TYPE Matrix AS OBJECT
 /*************************** MATRIX BODY ***************************/
 /*******************************************************************/
 CREATE OR REPLACE TYPE BODY Matrix AS
+  /**
+   * constructs an object of type 'Matrix'
+   * @return the matrix object w/ no rows and columns
+   */
+  CONSTRUCTOR FUNCTION Matrix RETURN SELF AS RESULT AS
+  BEGIN
+    SELF.noOfRows := 0;
+    SELF.noOfCols := 0;
+    SELF.data := ARRAY_2D();
+    
+    RETURN;
+  END Matrix;
+
   /**
    * @param noOfRows the number of rows that the matrix should have
    * @param noOfCols the number of columns that the matrix should have
@@ -488,6 +505,23 @@ CREATE OR REPLACE TYPE BODY Matrix AS
       SELF.data(i)(SELF.data.COUNT) := vector(i);
     END LOOP;
   END appendColVector;
+  
+  /**
+   * create a matrix object from a column vector
+   * @param v the column vector to consider
+   * @return the matrix equivalent to the column vector passed as parameter
+   */
+  STATIC FUNCTION colVectorToMatrix(v ARRAY_1D) RETURN MATRIX AS
+  m MATRIX;
+  BEGIN
+    m := MATRIX(v.COUNT, 1);
+    
+    FOR i IN 1 .. m.noOfRows LOOP
+      m.setDataCell(i, 1, v(i));
+    END LOOP;
+    
+    RETURN m;
+  END colVectorToMatrix;
   
   /**
    * prints the contents of the matrix
