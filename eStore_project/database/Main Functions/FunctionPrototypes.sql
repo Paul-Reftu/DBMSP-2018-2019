@@ -204,4 +204,202 @@ is
 end;
 /
 
+set serveroutput on;
+create or replace procedure CreateMatrix(matrice out array_2d) is
+cursor parcurgere is select countryoneid,countrytwoid,cost from countryconnections order by countryoneid;
+v_id1 number(38,0);
+v_id2 number(38,0);
+v_cost float;
+begin
+  matrice := array_2d();
+  matrice.extend(196);
+  for i in matrice.first .. matrice.last loop
+    matrice(i) := array_1d();
+    matrice(i).extend(196);
+  end loop;
+  
+  open parcurgere;
+  loop
+    exit when parcurgere%notfound;
+    fetch parcurgere into v_id1,v_id2,v_cost;
+    matrice(v_id1)(v_id2):=v_cost;
+  end loop;
+  close parcurgere;
+  
+  
+  /*  print the matrix
+  
+  for i in matrice.first .. matrice.last loop
+      for j in matrice(i).first .. matrice(i).last loop
+        dbms_output.put(matrice(i)(j) || '|');
+    end loop;
+    dbms_output.put_line('');
+  end loop;
+  */
+end;
 
+CREATE OR REPLACE TYPE vector IS table of int
+CREATE OR REPLACE TYPE matrice IS table of vector
+
+create or replace procedure bfs (rgraph in out array_2d,s in out int ,t in out int,path in out vector,result out int) is
+visited vector;
+queue vector;
+u int;
+v int;
+v_index int:=1;
+begin
+visited :=vector();
+visited.extend(196);
+queue:=vector();
+queue.extend(196);
+queue(v_index) := s;
+for i in visited.first .. visited.last loop
+  visited(i):=0;
+end loop;
+visited(s):=1;
+path(s) := -1;
+while v_index > 0 loop
+  u := queue(v_index);
+  queue(v_index):=0;
+  v_index:=v_index-1;
+  for v in 1 .. 196 loop
+    if (visited(v) = 0 and rgraph(u)(v)  <>0) then 
+      v_index:=v_index+1;
+      queue(v_index):=v;
+      path(v) :=u;
+      visited(v):=1;
+    end if;
+  end loop;
+end loop;
+if visited(t) = 1 then
+  result :=1;
+else
+  result :=0;
+end if;
+
+end;
+
+create or replace procedure FordF(graph in out array_2d,s in out int,t in out int) is
+u int:=1;
+v int :=1;
+rgraph array_2d;
+path vector:=vector();
+max_flow int:=0;
+path_flow int :=9999999;
+result int :=0;
+begin
+rgraph :=array_2d();
+rgraph.extend(196);
+for i in rgraph.first .. rgraph.last loop
+  rgraph(i):=array_1d();
+  rgraph(i).extend(196);
+end loop;
+for i in rgraph.first .. rgraph.last loop
+  for j in rgraph(i).first .. rgraph(i).last loop
+    rgraph(i)(j):= graph(i)(j);
+  end loop;
+end loop;
+path.extend(196);
+for i in path.first .. path.last loop
+  path(i) := 0;
+end loop;
+max_flow:=0;
+bfs(rgraph,s,t,path,result);
+while(result = 1) loop
+  path_flow:=9999999;
+  v:=t;
+  loop
+    exit when v = s;
+    u := path(v);
+    if(path_flow > rgraph(u)(v)) then 
+      path_flow:=rgraph(u)(v);
+    end if;
+    v:=path(v);
+    bfs(rgraph,s,t,path,result);
+  end loop;
+  
+  
+  v:=t;
+  loop
+    exit when v = s;
+    u := path(v);
+    rgraph(u)(v) :=rgraph(u)(v) - path_flow;
+    rgraph(v)(u) :=rgraph(v)(u) + path_flow;
+    v:=path(v);
+  end loop;
+  
+  max_flow:=max_flow + path_flow;
+end loop;
+
+dbms_output.put_line(max_flow);
+end;
+
+
+set SERVEROUTPUT ON;
+declare
+graph array_2d;
+s int:=1;
+t int:=6;
+begin
+graph:=array_2d();
+graph.extend(196);
+for i in graph.first .. graph.last loop
+  graph(i):=array_1d();
+  graph(i).extend(196);
+end loop;
+graph(1)(1) := 0;
+graph(1)(2):= 16;
+graph(1)(3):= 13;
+graph(1)(4):= 0;
+graph(1)(5):= 0;
+graph(1)(6):= 0;
+graph(2)(1) := 0;
+graph(2)(2) := 0;
+graph(2)(3) := 10;
+graph(2)(4) := 12;
+graph(2)(5) := 0;
+graph(2)(6) :=0;
+graph(3)(1) :=0;
+graph(3)(2) :=4;
+graph(3)(3) := 0;
+graph(3)(4) :=0;
+graph(3)(5) :=14;
+graph(3)(6) :=0;
+graph(4)(1) :=0;
+graph(4)(2) := 0;
+graph(4)(3) :=9;
+graph(4)(4) :=0;
+graph(4)(5) :=0;
+graph(4)(6) := 20;
+graph(5)(1) := 0;
+graph(5)(2) :=0;
+graph(5)(3) :=0;
+graph(5)(4) := 7;
+graph(5)(5) := 0;
+graph(5)(6) :=4;
+graph(6)(1) := 0;
+graph(6)(2) :=0;
+graph(6)(3) := 0;
+graph(6)(4) :=0;
+graph(6)(5) :=0;
+graph(6)(6) := 0;
+FordF(graph,s,t);
+end;
+
+
+
+
+declare
+matrix array_2d;
+s int :=1;
+t int:= 100;
+begin
+CreateMatrix(matrix);
+/*for i in matrix.first .. matrix.last loop
+      for j in matrix(i).first .. matrix(i).last loop
+        dbms_output.put(matrix(i)(j) || '|');
+    end loop;
+    dbms_output.put_line('');
+  end loop;*/
+FordF(matrix,s,t);
+end;

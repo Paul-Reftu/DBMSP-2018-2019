@@ -275,10 +275,14 @@ v_id2 number(38,0) := 0;
 begin
 while v_id1 <= 196 loop
 v_id1:=v_id1+1;
-v_id2:=v_id1+1;
+v_id2:=v_id1;
 while v_id2 <= 196 loop
-insert into countryconnections (countryoneid,countrytwoid,cost) values (v_id1,v_id2,dbms_random.value(1,1000));
-v_id2:=v_id2+1;
+  
+  insert into countryconnections (countryoneid,countrytwoid,cost) values (v_id1,v_id2,floor(dbms_random.value(1,1000)));
+  if v_id1 != v_id2 then
+  insert into countryconnections (countrytwoid,countryoneid,cost) values (v_id1,v_id2,floor(dbms_random.value(1,1000)));
+  end if;
+  v_id2:=v_id2+1;
 end loop;
 end loop;
 end;
