@@ -15,8 +15,8 @@
 
 				$query = "SELECT products.id, name, description, username, type, price FROM products 
 					JOIN users ON products.sellerid = users.id
-					WHERE name LIKE '%' || :searchKey 
-					 || '%' OR description LIKE '%' || :searchKey || '%'";
+					WHERE LOWER(name) LIKE LOWER('%' || :searchKey 
+					 || '%') OR LOWER(description) LIKE LOWER('%' || :searchKey || '%')";
 				$statement = oci_parse($conn, $query);
 				oci_bind_by_name($statement, ":searchKey", $_GET["searchKey"]);
 				oci_execute($statement);
