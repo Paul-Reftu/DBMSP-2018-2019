@@ -1,7 +1,7 @@
 <?php
 	class Search {
-		private $username = "STUDENT";
-		private $password = "student0";
+		private $username = "PROIECT";
+		private $password = "PROIECT";
 		private $connPath = "localhost/XE";
 
 		function __construct() {

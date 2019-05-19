@@ -44,32 +44,33 @@
                                 oci_execute($stmt);
                                 if ($response==1)
                                 {
-                                    echo 'Email allready in database';
+                                    echo '<p class="error"> Email already in database </p>';
                                 }
                                 elseif($response == 2)
                                 {
-                                    echo 'Username allready in database';
+                                    echo '<p class="error">Username already in database</p>';
                                 }
                                 elseif($response ==0)
                                 {
-                                    echo 'Register success';
+                                    echo '<p class="success">Register success</p>';
                                 }
                             }
                             else
                             {
-                                echo 'invalid location';
+                                echo '<p class="error">invalid location</p>';
                             }
                             
                         }
                         else
                         {
-                            echo 'invalid email';
+                            echo '<p class="error">invalid email</p>';
                         }
                         
                     }
                     else
                     {
-                        echo 'invalid username';
+                        echo '<p class="error">invalid username</p>';
+                       
                     }
                     
                         
@@ -79,7 +80,7 @@
                     Register();
                 }
 	?>
-
+                
 	<main class="rmain">
 	    <div class="register">
 	        <!-- https://fandi-conference.com/register-icon/ -->

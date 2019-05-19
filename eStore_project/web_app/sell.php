@@ -1,3 +1,8 @@
+<?php session_start(); //starts all the sessions 
+        if($_SESSION['user'] == NULL) {
+            header('Location: login.php'); //take user to the login page if there's no information stored in session variable
+        } ?>
+
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -13,11 +18,53 @@
 
 <body>
 	<?php
+                $conn = oci_connect('PROIECT','PROIECT','localhost/XE') or die;
 		include("Header.php");
 		include("Navbar.php");
+                function Sell()
+                {
+                    global $conn;
+                    $prodname = $_POST['prodname'];
+                    $proddes = $_POST['proddes'];
+                    $prodtype = $_POST['prodtype'];
+                    $prodprice = $_POST['prodprice'];
+                    $sql = 'BEGIN Sell(:selid,:prodname,:proddes,:prodtype,:prodprice); END;';
+                    $stmt = oci_parse($conn,$sql);
+                    oci_bind_by_name($stmt,':selid',$_SESSION['id'],32);
+                    oci_bind_by_name($stmt,':prodname',$prodname,32);
+                    oci_bind_by_name($stmt,':proddes',$proddes,1000);
+                    oci_bind_by_name($stmt,':prodtype',$prodtype,32);
+                    oci_bind_by_name($stmt,':prodprice',$prodprice,32);
+                    oci_execute($stmt);
+                }
+                if(isset($_POST['sell']))
+                {
+                    Sell();
+                }
 	?>
 
-	<h2>This page will be engineered once the required PL/SQL method/package for this particular page's functionality has been developed.</h2>
+	<form class="sell" action="sell.php" method="post"> 
+	            <div id=prodName>
+		            <label for="prodName">Product Name:</label>
+		            <input type="text" required placeholder="Enter product name" name='prodname' />
+	            </div>
+                    <br>
+	            <div id=prodDescription>
+		            <label for="prodDescription" >Product Description:</label>
+                            <textarea  placeholder="Item description here" required name='proddes' id='proddes' class='proddes'></textarea>
+	            </div>
+                    <br>
+                     <div id=prodType>
+		            <label for="prodName">Type:</label>
+		            <input type="text" required placeholder="Enter product type" name='prodtype' /> 
+	            </div>
+                    <br>
+                    <div id=prodPrice>
+		            <label for="prodPrice">Price:</label>
+		            <input type="number"  step="0.01" required placeholder="Enter product price" name='prodprice' />
+	            </div>
+	            <button type="submit" id="sell" name="sell">Sell</button>
+	        </form>
 
 	<?php
 		include("Footer.php");

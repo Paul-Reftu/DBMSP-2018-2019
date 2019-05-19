@@ -15,12 +15,20 @@
 	<?php
 		include("Header.php");
 		include("Navbar.php");
+                if(isset($_POST['logOut']))
+                {
+                    session_start();
+                    session_unset();
+                    session_destroy();
+                }
 	?>
 
 	<main>
 		<section>
 			<br /> <br />
-
+                        <form action="index.php" method="post" >
+                            <input type='submit' name='logOut' value='LogOut' style="float:right" />
+                        </form>
 			<form action="index.php" method="GET">
 				Search for a product: <br />
 				<input type="text" name="searchKey" />

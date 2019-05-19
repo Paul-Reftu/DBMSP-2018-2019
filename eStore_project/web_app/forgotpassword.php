@@ -28,11 +28,11 @@
                     oci_execute($stmt);
                     if ($response==1)
                     {
-                        echo 'The email does not Exist';
+                        echo '<p class="error">The email does not Exist</p>';
                     }
                     else
                     {
-                        echo 'Email sent';
+                        echo '<p class="success">Email sent</p>';
                     }
                         
                 }
@@ -53,7 +53,7 @@
 			        <input type="text" required id="registerEmail" placeholder="Enter your E-mail" name="email"/>
 			    </div>
 			    <p id="required">All fields with * are required.</p>
-			    <button id="FP" type="submit" name="submit">Reset</button>
+			    <button id="FP" type="submit" name="submit">Send Email</button>
 		    </form>
             </form>
         </div>

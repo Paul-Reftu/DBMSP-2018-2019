@@ -1,3 +1,10 @@
+<?php 
+error_reporting(E_ERROR | E_PARSE);
+session_start(); //starts all the sessions 
+        if($_SESSION['user'] != NULL) {
+            header('Location: index.php'); //take user to the details page if already logged in
+        } ?>
+
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -22,16 +29,19 @@
                     $response = 0;
                     $username = $_POST['username'];
                     $password = $_POST['password'];
-                    $sql = 'BEGIN LogIn(:username,:password,:response); END;';
+                    $id = 0;
+                    $sql = 'BEGIN LogIn(:username,:password,:id,:response); END;';
                     $stmt = oci_parse($conn,$sql);
                     oci_bind_by_name($stmt,':username',$username,32);
                     oci_bind_by_name($stmt,':password',$password,32);
+                    oci_bind_by_name($stmt,':id',$id,32);
                     oci_bind_by_name($stmt,':response',$response,32);
                     oci_execute($stmt);
                     if ($response==1)
                     {
                         session_start();
                         $_SESSION['user'] = $username;
+                        $_SESSION['id'] = $id;
                         /*    put before !DOCTYPE this:
                          * 
                          *          session_start(); //starts all the sessions 
@@ -40,10 +50,11 @@
                                     } 
                          * 
                          *     this should mantain login status */
+                        header('location: index.php');
                     }
                     else
                     {
-                        echo 'Username or Password incorrect';
+                        echo '<p class="error">Username or Password incorrect</p>';
                     }
                         
                 }

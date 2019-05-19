@@ -3,6 +3,8 @@ html {
     font-family: "Times New Roman", "Times", "Serif";
 }
 
+
+
 @media(max-width: 1580px) {
 	html {
 		font-size: 18px;
@@ -318,6 +320,20 @@ nav ul {
 /* -------------- LOGIN END --------------*/
 
 /* -------------- CREATE ACCOUNT START --------------*/
+
+.error
+{
+	font-size:25px;
+	color:red;
+	text-align:center;
+}
+
+.success
+{
+	font-size:25px;
+	color:green;
+	text-align:center;
+}
 
 .register {
     text-align: center;

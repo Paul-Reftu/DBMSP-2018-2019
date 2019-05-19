@@ -30,7 +30,7 @@ end;
 
 
 set serveroutput on;
-create or replace procedure LogIn (user in varchar2,passw in varchar2,value out int) is    /*  all variables are automatically 'bind variables' for performance and security  */
+create or replace procedure LogIn (user in varchar2,passw in varchar2,id1 out int,value out int) is    /*  all variables are automatically 'bind variables' for performance and security  */
   v_id number(38,0);
 begin
   begin
@@ -40,6 +40,7 @@ begin
           return;
   end;
   insert into activities (id,userid,name,time) values (batch_seq.nextval,v_id,'Login',systimestamp);
+  id1:=v_id;
   value:=1;
   return;
 end;
@@ -127,6 +128,19 @@ ret int;
 begin
 resettablemanage;
 end;
+
+
+
+create or replace procedure placeOrder(bid in int,prodid in int) is
+v_country int:=0;
+begin
+select id into v_country from country where name = ( select  adress from users where bid = id);
+insert into orders (id,buyerid,destcountryid,placed_at,arrived_on) values (orders_seq.nextval,bid,v_country,systimestamp,null);
+insert into orderdetails (id,orderid,productid,quantity) values (orderdets_seq.nextval,orders_seq.CURRVAL,prodid,1);
+insert into activities (id,userid,name,time) values (batch_seq.nextval,bid,'placed order',systimestamp);
+end;
+
+
 
 
 create or replace procedure resettablemanage is
@@ -320,7 +334,7 @@ end if;
 
 end;
 
-create or replace procedure FordF(graph in out array_2d,s in out int,t in out int) is
+create or replace procedure FordF(graph in out array_2d,s in out int,t in out int,flow out int) is
 u int:=1;
 v int :=1;
 rgraph array_2d;
@@ -371,7 +385,7 @@ while(result = 1) loop
   
   max_flow:=max_flow + path_flow;
 end loop;
-dbms_output.put_line(max_flow);
+flow:=max_flow;
 end;
 
 
@@ -426,23 +440,40 @@ graph(6)(6) := 0;
 FordF(graph,s,t);
 end;
 
+create or replace procedure getCountryName(v_id in int,v_name out varchar2) is
+begin
+select name into v_name from country where id = v_id;
+end;
 
-create or replace procedure GetSinks(v_source in out int,v_date in timestamp,v_list in out vector) is 
+
+create or replace procedure GetSinks(v_source in out int,v_date in timestamp,v_list in out vector, v_names out varchar2) is 
 cursor v_id is select destcountryid from orders where extract (day from v_date)||extract (month from v_date)||extract (year from v_date)  = extract (day from placed_at)||extract (month from placed_at)||extract (year from placed_at) ;
 id int:=0;
 data varchar2(10);
+aux varchar2(70);
 begin
 open v_id;
 loop
   fetch v_id into id ;
   exit when v_id%notfound;
+  if id not member of v_list then
+    getCountryName(id,aux);
+    v_names:= v_names || ', ' || aux;
+  end if;
   v_list.extend(1);
   v_list(v_list.count()):=id;
 end loop;
 close v_id;
 end;
 
-declare
+
+create or replace procedure sell(selid in int,predname in varchar2,description in varchar2,type in varchar2,price in number) is
+begin
+insert into products (id,sellerid,name,description,type,price) values (products_seq.nextval,selid,predname,description,type,price);
+insert into activities (id,userid,name,time) values (batch_seq.nextval,selid,'put up for sale',systimestamp);
+end;
+
+create or replace procedure FlowToday(flow in out int,actually out int,v_names out varchar2) is
 matrix array_2d;
 s int :=143;
 t int:= 197;
@@ -450,7 +481,7 @@ v_list vector;
 begin
 CreateMatrix(matrix);
 v_list:=vector();
-GetSinks(s,systimestamp,v_list);
+GetSinks(s,systimestamp,v_list,v_names);
 for i in matrix(197).first .. matrix(197).last loop
   matrix(197)(i):=0;
 end loop;
@@ -471,6 +502,16 @@ for i in matrix.first .. matrix.last loop
   
   
 /* Prints max flow for multiple sinks */
-
-FordF(matrix,s,t);
+FordF(matrix,s,t,flow);
+actually:=v_list.count();
+return;
 end;
+
+
+
+  declare 
+  da int:=0;
+  begin
+  FlowToday(da);
+  dbms_output.put_line(da);
+  end;

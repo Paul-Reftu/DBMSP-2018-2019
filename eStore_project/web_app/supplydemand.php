@@ -13,11 +13,35 @@
 
 <body>
 	<?php
+                /*session_start();
+                session_unset();
+                session_destroy();!/
+                 * 
+                 */
+                $conn = oci_connect('PROIECT','PROIECT','localhost/XE') or die;
 		include("Header.php");
 		include("Navbar.php");
-	?>
+                function getInfo()
+                {
+                    global $conn;
+                    $flow = 0;
+                    $actually = 0;
+                    $names = "";
+                    $sql = 'BEGIN FlowToday(:flow,:actually,:names); END;';
+                    $stmt = oci_parse($conn,$sql);
+                    oci_bind_by_name($stmt,':flow',$flow,32);
+                    oci_bind_by_name($stmt,':actually',$actually,32);
+                    oci_bind_by_name($stmt,':names',$names,10000);
+                    oci_execute($stmt);
+                    echo '<p>The maximum amount of packages that we can send today are:' . $flow . '</p>';
+                    echo '<p>The number of packets that we plan on sending today:' . $actually . '</p>';
+                    $names = str_replace(', ','<br>',$names);
+                    echo '<p>List of countryes that we plan on sending packages today:' . $names . '</p>';
+                }
+                    
+                getInfo();
 
-	<h2>This page will be engineered once the required PL/SQL method/package for this particular page's functionality has been developed.</h2>
+	?>
 	
 	<?php
 		include("Footer.php");

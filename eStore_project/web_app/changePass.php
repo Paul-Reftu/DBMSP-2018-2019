@@ -15,6 +15,7 @@
 
 <body>
 	<?php
+        
                 $conn = oci_connect('PROIECT','PROIECT','localhost/XE') or die;
 		include("Header.php");
 		include("Navbar.php");
@@ -46,13 +47,13 @@
                             }
                             else
                             {
-                                echo 'invalid pass';
+                                echo '<p class="error">invalid password</p>';
                             }
                         }
                     }
                     else
                     {
-                        echo 'Code is invalid';
+                        echo '<p class="error">Code is invalid or expired</p>';
                         exit(0);
                     }
                         
@@ -63,7 +64,7 @@
                 }
                 else
                 {
-                    echo 'The link is invalid';
+                    echo '<p class="error">The link is invalid</p>';
                     exit(0);
                 }
                     
