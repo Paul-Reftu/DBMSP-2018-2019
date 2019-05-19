@@ -17,9 +17,20 @@
 		include("Navbar.php");
 	?>
 
-	<h2>This page will be engineered once the required PL/SQL method/package for this particular page's functionality has been developed.</h2>
+	<main>
+		<section>
+			<br /> <br />
+
+			<form action="index.php" method="GET">
+				Search for a product: <br />
+				<input type="text" name="searchKey" />
+			</form>
+		</section>
+	</main>	
+
 
 	<?php
+		include("Search.php");
 		include("Footer.php");
 	?>
 </body>

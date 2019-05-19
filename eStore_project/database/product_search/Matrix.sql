@@ -192,40 +192,52 @@ CREATE OR REPLACE TYPE BODY Matrix AS
       RAISE_APPLICATION_ERROR(-20000, 'Matrix addition/subtraction undefined for two matrices of different dimensions.');
     ELSE
       DECLARE
-        m MATRIX := MATRIX(m1.noOfRows, m1.noOfCols);
+      m MATRIX;
       BEGIN
         IF (operation = 'add') THEN
-          FOR i IN m.data.FIRST .. m.data.LAST LOOP
-            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
-              m.setDataCell(i, j, m1.data(i)(j) + m2.data(i)(j));
-            END LOOP;
-          END LOOP; 
+          BEGIN
+            m := MATRIX(m1.noOfRows, m1.noOfCols);
+            
+            FOR i IN m.data.FIRST .. m.data.LAST LOOP
+              FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+                m.setDataCell(i, j, m1.data(i)(j) + m2.data(i)(j));
+              END LOOP;
+            END LOOP; 
+          END;
           
         ELSIF (operation = 'sub') THEN
-          FOR i IN m.data.FIRST .. m.data.LAST LOOP
-            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
-              m.setDataCell(i, j, m1.data(i)(j) - m2.data(i)(j));
-            END LOOP;
-          END LOOP; 
+          BEGIN
+            m := MATRIX(m1.noOfRows, m1.noOfCols);
+          
+            FOR i IN m.data.FIRST .. m.data.LAST LOOP
+              FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
+                m.setDataCell(i, j, m1.data(i)(j) - m2.data(i)(j));
+              END LOOP;
+            END LOOP; 
+          END;
           
         ELSIF (operation = 'mul') THEN
           IF (m1.noOfCols <> m2.noOfRows) THEN
             RAISE_APPLICATION_ERROR(-20001, 'Matrix dot product undefined for two matrices A and B where A.noOfCols != B.noOfRows.');
           END IF;
           
-          FOR i IN m.data.FIRST .. m.data.LAST LOOP
-            FOR j IN m.data(i).FIRST .. m.data(i).LAST LOOP
-              DECLARE
-                  tempSum FLOAT := 0.0;
-              BEGIN
-                FOR k IN m1.data(i).FIRST .. m1.data(i).LAST LOOP
-                  tempSum := tempSum + m1.data(i)(k) * m2.data(k)(j);
-                END LOOP;
-                
-                m.setDataCell(i, j, tempSum);
-              END;
-            END LOOP;
-          END LOOP; 
+          BEGIN
+            m := MATRIX(m1.noOfRows, m2.noOfCols);
+          
+            FOR i IN 1 .. m1.noOfRows LOOP
+              FOR j IN 1 .. m2.noOfCols LOOP
+                DECLARE
+                    tempSum FLOAT := 0.0;
+                BEGIN
+                  FOR k IN 1 .. m1.noOfCols LOOP
+                    tempSum := tempSum + m1.data(i)(k) * m2.data(k)(j);
+                  END LOOP;
+                  
+                  m.setDataCell(i, j, tempSum);
+                END;
+              END LOOP;
+            END LOOP; 
+          END;
         END IF;
         
         RETURN m;
@@ -479,16 +491,20 @@ CREATE OR REPLACE TYPE BODY Matrix AS
     /*
      * if our target matrix has no rows and/or columns, then
      * extend the no. of rows w/ the vector's size and the no.
-     * of columns w/ 1
+     * of columns by 1
      */
-    IF SELF.noOfRows = 0 OR SELF.noOfCols = 0 THEN
+    IF SELF.noOfRows = 0 AND SELF.noOfCols = 0 THEN
       SELF.noOfRows := vector.COUNT;
       SELF.noOfCols := 1;
       SELF.data.EXTEND(vector.COUNT);
       
-      FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+      FOR i IN 1 .. vector.COUNT LOOP
+        SELF.data(i) := ARRAY_1D();
         SELF.data(i).EXTEND(1);
+        SELF.data(i)(1) := vector(i);
       END LOOP;
+      
+      RETURN;
     END IF;
     
     /*
@@ -500,9 +516,9 @@ CREATE OR REPLACE TYPE BODY Matrix AS
     END IF;
     
     SELF.noOfCols := SELF.noOfCols + 1;
-    FOR i IN SELF.data.FIRST .. SELF.data.LAST LOOP
+    FOR i IN 1 .. SELF.data.COUNT LOOP
       SELF.data(i).EXTEND(1);
-      SELF.data(i)(SELF.data.COUNT) := vector(i);
+      SELF.data(i)(SELF.data(i).COUNT) := vector(i);
     END LOOP;
   END appendColVector;
   
@@ -541,7 +557,7 @@ END;
 /*
  * Usage example
  */
-
+/*
 SET SERVEROUTPUT ON;
 
 DECLARE
@@ -611,3 +627,4 @@ BEGIN
   colVecMatrix.print();
 END;
 /
+*/

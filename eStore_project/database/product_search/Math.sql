@@ -180,6 +180,7 @@ END Math;
 /*
  * Math package usage application
  */
+/*
 SET SERVEROUTPUT ON;
 DECLARE
   vector ARRAY_1D;
@@ -210,3 +211,4 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE('');
 END;
 /
+*/

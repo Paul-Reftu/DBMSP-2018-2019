@@ -17,9 +17,8 @@
 		include("Navbar.php");
 	?>
 
-	<h2>This page will be engineered once the required PL/SQL method/package for this particular page's functionality has been developed.</h2>
-
 	<?php
+		include("Basket.php");
 		include("Footer.php");
 	?>
 </body>
