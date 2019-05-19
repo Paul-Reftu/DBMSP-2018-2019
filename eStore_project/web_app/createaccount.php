@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -13,8 +14,70 @@
 
 <body>
 	<?php
+		$conn = oci_connect('PROIECT','PROIECT','localhost/XE') or die;
 		include("Header.php");
 		include("Navbar.php");
+                function Register()
+                {
+                    global $conn;
+                    $response = 0;
+                    $username = $_POST['username'];
+                    if(preg_match('/^(?=.*([[:lower:]])*)(?=.*([[:upper:]])*)(?=.*([[:digit:]])*)(?=.*([[:punct:]])*)[[:lower:][:upper:][:digit:][:punct:]]{8,20}$/', $username))
+                    {
+                        $email = $_POST['email'];
+                        if (preg_match('/^(?=.*([[:lower:]])*)(?=.*([[:upper:]])*)(?=.*([[:digit:]])*)(?=.*([[:punct:]])*)[[:lower:][:upper:][:digit:][:punct:]]{3,}@(?=.*([[:lower:]])*)(?=.*([[:upper:]])*)(?=.*([[:digit:]])*)(?=.*([[:punct:]])*)[[:lower:][:upper:][:digit:][:punct:]]{3,}\.(?=.*([[:lower:]])*)[[:lower:]]{2,}$/', $email))
+                        {
+                            $location = $_POST['location'];
+                            $sql2 =  'BEGIN ValidAdress(:location,:response); END;';
+                            $stmt2 = oci_parse($conn,$sql2);
+                            oci_bind_by_name($stmt2,':location',$location,32);
+                            oci_bind_by_name($stmt2,':response',$response,32);
+                            oci_execute($stmt2);
+                            if($response == 1)
+                            {
+                                $sql = 'BEGIN Register(:username,:email,:location,:response); END;';
+                                $stmt = oci_parse($conn,$sql);
+                                oci_bind_by_name($stmt,':username',$username,32);
+                                oci_bind_by_name($stmt,':email',$email,32);
+                                oci_bind_by_name($stmt,':location',$location,32);
+                                oci_bind_by_name($stmt,':response',$response,32);
+                                oci_execute($stmt);
+                                if ($response==1)
+                                {
+                                    echo 'Email allready in database';
+                                }
+                                elseif($response == 2)
+                                {
+                                    echo 'Username allready in database';
+                                }
+                                elseif($response ==0)
+                                {
+                                    echo 'Register success';
+                                }
+                            }
+                            else
+                            {
+                                echo 'invalid location';
+                            }
+                            
+                        }
+                        else
+                        {
+                            echo 'invalid email';
+                        }
+                        
+                    }
+                    else
+                    {
+                        echo 'invalid username';
+                    }
+                    
+                        
+                }
+                if(isset($_POST['submit']))
+                {
+                    Register();
+                }
 	?>
 
 	<main class="rmain">
@@ -23,34 +86,24 @@
 	        <img id="registerPhoto" src="assets/images/register.png"></img> 
 	        <h1>Register</h1>
 
-		    <form action=/register> 
+		    <form action="createaccount.php" method="post"> 
 			    <div>
 			        <label for="registerUsername">Username*:</label>
-			        <input type="text" required id="registerUsername" placeholder="Enter your username" />
-			    </div>
-
-			    <div>
-			        <label for="registerPassword">Password*:</label>
-			        <input type="password" required class="registerPassword" placeholder="Enter your password" />
-			    </div>
-
-			    <div>
-			        <label for="registerPassword">Repeat Password*:</label>
-			        <input type="password" required class="registerPassword" placeholder="Repeat password" />
+			        <input type="text" required id="registerUsername" placeholder="Enter your username" name="username" />
 			    </div>
 
 			    <div>
 			        <label for="registerEmail">E-mail*:</label>
-			        <input type="text" required id="registerEmail" placeholder="Enter your E-mail" />
+			        <input type="text" required id="registerEmail" placeholder="Enter your E-mail" name="email"/>
 			    </div>
 
 			    <div>
 			        <label for="registerAddress">Address*:</label>
-			        <input type="text" required id="registeAddress" placeholder="Enter your home address" />
+			        <input type="text" required id="registeAddress" placeholder="Enter your home address" name="location"/>
 			    </div>
 
 			    <p id="required">All fields with * are required for register.</p>
-			    <button type="submit">Register</button>
+			    <button type="submit" name="submit">Register</button>
 		    </form>
 	    </div>
     </main>

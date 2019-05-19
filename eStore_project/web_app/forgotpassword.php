@@ -13,20 +13,48 @@
 
 <body>
 	<?php
-		include("Header.php");
-		include("Navbar.php");
+            $conn = oci_connect('PROIECT','PROIECT','localhost/XE') or die;
+            include("Header.php");
+            include("Navbar.php");
+            function ResetPass()
+                {
+                    global $conn;
+                    $response = 0;
+                    $email = $_POST['email'];
+                    $sql = 'BEGIN issuerestcode(:email,:response); END;';
+                    $stmt = oci_parse($conn,$sql);
+                    oci_bind_by_name($stmt,':email',$email,32);
+                    oci_bind_by_name($stmt,':response',$response,32);
+                    oci_execute($stmt);
+                    if ($response==1)
+                    {
+                        echo 'The email does not Exist';
+                    }
+                    else
+                    {
+                        echo 'Email sent';
+                    }
+                        
+                }
+                if(isset($_POST['submit']))
+                {
+                    ResetPass();
+                }
 	?>
 
 	<main class=mainFP>
         <div id=divFP>
             <img src="assets/images/forgpass.png" alt="An image with a lock indicating that here you can reset your password">
             <h1>Forgot password</h1>
-            <form class="fp">
-                <div id=mailFP>
-                    <label>Please enter your E-mail:<input name="ForgotPasswordMAil" type="text" required placeholder="Enter your E-mail here"></label>
-                </div>
-
-                <button type="submit" id="FP">Reset password</button>
+            <form class="fp" action="forgotpassword.php" method='post'>
+                 <form action="forgotpassword.php" method="post"> 
+			    <div>
+			        <label for="registerEmail">E-mail*:</label>
+			        <input type="text" required id="registerEmail" placeholder="Enter your E-mail" name="email"/>
+			    </div>
+			    <p id="required">All fields with * are required.</p>
+			    <button id="FP" type="submit" name="submit">Reset</button>
+		    </form>
             </form>
         </div>
 

@@ -1,6 +1,34 @@
 
 create index i_userpass on USERS(username,password);
 
+create or replace procedure changePass(v_code in varchar2,pass in varchar2, value out int) is
+v_id int;
+v_email varchar2(70);
+v_code1 varchar2(1000);
+begin
+v_code1 := utl_encode.text_decode(v_code,'AL32UTF8',UTL_ENCODE.BASE64);
+v_code1 := substr(v_code1,1,instr(v_code1,' ')-1);
+update users set password=trim(pass) where id = to_number(v_code1);
+insert into activities (id,userid,name,time) values (batch_seq.nextval,to_number(v_code1),'changed password',systimestamp);
+delete from passresettable where v_code = code;
+value:=1;
+return;
+end;
+
+create or replace procedure IsCodeValid(v_code in varchar2,value out int) is
+v_id number(38,0);
+begin
+begin
+select id into v_id from passresettable where trim(v_code)=trim(code);
+exception when no_data_found then
+  value:=0;
+  return;
+end;
+value:=1;
+return ;
+end;
+
+
 set serveroutput on;
 create or replace procedure LogIn (user in varchar2,passw in varchar2,value out int) is    /*  all variables are automatically 'bind variables' for performance and security  */
   v_id number(38,0);
@@ -22,7 +50,19 @@ end;
  DBMS_OUTPUT.PUT_LINE( users_seq.nextval);
  end;
 
-
+create or replace procedure ValidAdress(adress in out varchar2, value out int) is
+v_id int;
+begin
+adress:=trim(initcap(lower(adress)));
+begin
+select id into v_id from country where adress = name;
+exception when no_data_found then 
+  value:=0;
+  return;
+end;
+value:=1;
+return;
+end;
 
 
 
@@ -73,10 +113,11 @@ end;
 select username into v_username from users where id = v_id; 
 v_code := to_char(v_id) || ' '|| v_username || ' ' || emailaddr || ' ' || TO_CHAR(systimestamp);
 v_code := utl_encode.text_encode(v_code,'AL32UTF8',UTL_ENCODE.BASE64);
+v_code := replace(replace(v_code,chr(10)),chr(13));
 insert into passresettable (id,code,issued) values (passreset_seq.nextval,v_code,systimestamp);
 insert into activities (id,userid,name,time) values (batch_seq.nextval,v_id,'pass change request',systimestamp);
-  apex_mail_p.mail('Oracleappsnotes', emailaddr, 'Password reset', v_username 
-                      || ' you have issued a password reset link, please follow this link '  || v_code || '<br> The link will be avariable for the next 24 hours'  || '<br> If you did not ask for this please ignore the email');
+  apex_mail_p.mail('Oracleappsnotes', emailaddr, 'Password Reset', v_username 
+                      || ' you have issued a password reset link, please follow this link '  || 'http://localhost:8081/eStore_project/web_app/changePass.php' || '?' ||'code=' || v_code || '<br> The link will be avariable for the next 24 hours'  || '<br> If you did not ask for this please ignore the email');
 value :=0;
 return;
 end;
@@ -409,7 +450,7 @@ v_list vector;
 begin
 CreateMatrix(matrix);
 v_list:=vector();
-GetSinks(s,'25-AUG-07 10.52.33.701103000 AM',v_list);
+GetSinks(s,systimestamp,v_list);
 for i in matrix(197).first .. matrix(197).last loop
   matrix(197)(i):=0;
 end loop;
