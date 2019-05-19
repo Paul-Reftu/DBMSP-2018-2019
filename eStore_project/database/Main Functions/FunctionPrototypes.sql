@@ -212,10 +212,10 @@ v_id2 number(38,0);
 v_cost float;
 begin
   matrice := array_2d();
-  matrice.extend(196);
+  matrice.extend(197);
   for i in matrice.first .. matrice.last loop
     matrice(i) := array_1d();
-    matrice(i).extend(196);
+    matrice(i).extend(197);
   end loop;
   
   open parcurgere;
@@ -249,9 +249,9 @@ v int;
 v_index int:=1;
 begin
 visited :=vector();
-visited.extend(196);
+visited.extend(197);
 queue:=vector();
-queue.extend(196);
+queue.extend(197);
 queue(v_index) := s;
 for i in visited.first .. visited.last loop
   visited(i):=0;
@@ -262,7 +262,7 @@ while v_index > 0 loop
   u := queue(v_index);
   queue(v_index):=0;
   v_index:=v_index-1;
-  for v in 1 .. 196 loop
+  for v in 1 .. 197 loop
     if (visited(v) = 0 and rgraph(u)(v)  <>0) then 
       v_index:=v_index+1;
       queue(v_index):=v;
@@ -289,17 +289,17 @@ path_flow int :=9999999;
 result int :=0;
 begin
 rgraph :=array_2d();
-rgraph.extend(196);
+rgraph.extend(197);
 for i in rgraph.first .. rgraph.last loop
   rgraph(i):=array_1d();
-  rgraph(i).extend(196);
+  rgraph(i).extend(197);
 end loop;
 for i in rgraph.first .. rgraph.last loop
   for j in rgraph(i).first .. rgraph(i).last loop
     rgraph(i)(j):= graph(i)(j);
   end loop;
 end loop;
-path.extend(196);
+path.extend(197);
 for i in path.first .. path.last loop
   path(i) := 0;
 end loop;
@@ -330,7 +330,6 @@ while(result = 1) loop
   
   max_flow:=max_flow + path_flow;
 end loop;
-
 dbms_output.put_line(max_flow);
 end;
 
@@ -342,10 +341,10 @@ s int:=1;
 t int:=6;
 begin
 graph:=array_2d();
-graph.extend(196);
+graph.extend(197);
 for i in graph.first .. graph.last loop
   graph(i):=array_1d();
-  graph(i).extend(196);
+  graph(i).extend(197);
 end loop;
 graph(1)(1) := 0;
 graph(1)(2):= 16;
@@ -387,19 +386,50 @@ FordF(graph,s,t);
 end;
 
 
-
+create or replace procedure GetSinks(v_source in out int,v_date in timestamp,v_list in out vector) is 
+cursor v_id is select destcountryid from orders where extract (day from v_date)||extract (month from v_date)||extract (year from v_date)  = extract (day from placed_at)||extract (month from placed_at)||extract (year from placed_at) ;
+id int:=0;
+data varchar2(10);
+begin
+open v_id;
+loop
+  fetch v_id into id ;
+  exit when v_id%notfound;
+  v_list.extend(1);
+  v_list(v_list.count()):=id;
+end loop;
+close v_id;
+end;
 
 declare
 matrix array_2d;
-s int :=1;
-t int:= 100;
+s int :=143;
+t int:= 197;
+v_list vector;
 begin
 CreateMatrix(matrix);
-/*for i in matrix.first .. matrix.last loop
+v_list:=vector();
+GetSinks(s,'25-AUG-07 10.52.33.701103000 AM',v_list);
+for i in matrix(197).first .. matrix(197).last loop
+  matrix(197)(i):=0;
+end loop;
+if (v_list.count()>0) then
+    for i in v_list.first .. v_list.last loop
+      matrix(v_list(i))(197):=99999;
+    end loop;
+end if;
+/*
+for i in matrix.first .. matrix.last loop
       for j in matrix(i).first .. matrix(i).last loop
         dbms_output.put(matrix(i)(j) || '|');
     end loop;
     dbms_output.put_line('');
   end loop;*/
+  
+  
+  
+  
+/* Prints max flow for multiple sinks */
+
 FordF(matrix,s,t);
 end;
