@@ -44,6 +44,14 @@
                                 oci_bind_by_name($stmt2,':password',$password,32);
                                 oci_bind_by_name($stmt2,':response',$response,32);
                                 oci_execute($stmt2);
+                                if(respose == 1)
+                                {
+                                    echo '<p class="success"> password changed</p>';
+                                }
+                                else
+                                {
+                                    echo '<p class="error"> password is too weak</p>';
+                                }
                             }
                             else
                             {

@@ -2,16 +2,22 @@
 create index i_userpass on USERS(username,password);
 
 create or replace procedure changePass(v_code in varchar2,pass in varchar2, value out int) is
-v_id int;
+v_pass varchar2(30);
 v_email varchar2(70);
 v_code1 varchar2(1000);
 begin
-v_code1 := utl_encode.text_decode(v_code,'AL32UTF8',UTL_ENCODE.BASE64);
-v_code1 := substr(v_code1,1,instr(v_code1,' ')-1);
-update users set password=trim(pass) where id = to_number(v_code1);
-insert into activities (id,userid,name,time) values (batch_seq.nextval,to_number(v_code1),'changed password',systimestamp);
-delete from passresettable where v_code = code;
-value:=1;
+begin
+select path into v_pass from blacklistedpasses where path = pass;
+  EXCEPTION when no_data_found then 
+  v_code1 := utl_encode.text_decode(v_code,'AL32UTF8',UTL_ENCODE.BASE64);
+  v_code1 := substr(v_code1,1,instr(v_code1,' ')-1);
+  update users set password=trim(pass) where id = to_number(v_code1);
+  insert into activities (id,userid,name,time) values (batch_seq.nextval,to_number(v_code1),'changed password',systimestamp);
+  delete from passresettable where v_code = code;
+  value:=1;
+  return;
+end;
+value:=0;
 return;
 end;
 
